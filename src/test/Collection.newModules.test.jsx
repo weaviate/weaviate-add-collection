@@ -142,6 +142,7 @@ describe('generative-contextualai — JSON import round-trip', () => {
           topP: 0.9,
           maxNewTokens: 100,
           systemPrompt: 'You are a helpful assistant.',
+          avoidCommentary: true,
         }
       },
       properties: [
@@ -159,6 +160,7 @@ describe('generative-contextualai — JSON import round-trip', () => {
       topP: 0.9,
       maxNewTokens: 100,
       systemPrompt: 'You are a helpful assistant.',
+      avoidCommentary: true,
     })
   })
 })
@@ -190,6 +192,47 @@ describe('reranker-contextualai — JSON import round-trip', () => {
       instruction: 'Rerank by relevance to legal queries.',
       topN: 10,
     })
+  })
+})
+
+// ─── JSON round-trip: multi2vec-voyageai videoFields + dimensions ────────────
+
+describe('multi2vec-voyageai — videoFields + dimensions round-trip (PR #379)', () => {
+  it('preserves videoFields, dimensions, and model through import', async () => {
+    const initial = {
+      class: 'VoyageMmTest',
+      vectorConfig: {
+        default: {
+          vectorizer: {
+            'multi2vec-voyageai': {
+              model: 'voyage-multimodal-3.5',
+              dimensions: 1024,
+              imageFields: ['image'],
+              textFields: ['text'],
+              videoFields: ['video'],
+            }
+          },
+          vectorIndexType: 'hnsw'
+        }
+      },
+      properties: [
+        { name: 'text',  dataType: ['text'],  indexFilterable: true, indexSearchable: true },
+        { name: 'image', dataType: ['blob'],  indexFilterable: false },
+        { name: 'video', dataType: ['blob'],  indexFilterable: false },
+      ],
+    }
+
+    const { container } = render(<Collection initialJson={initial} />)
+    await waitForRender(container)
+
+    const json = readJson(container)
+    const vec = json.vectorConfig?.default?.vectorizer?.['multi2vec-voyageai']
+    expect(vec).toBeDefined()
+    expect(vec.model).toBe('voyage-multimodal-3.5')
+    expect(vec.dimensions).toBe(1024)
+    expect(vec.imageFields).toEqual(['image'])
+    expect(vec.textFields).toEqual(['text'])
+    expect(vec.videoFields).toEqual(['video'])
   })
 })
 

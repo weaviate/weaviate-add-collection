@@ -102,6 +102,10 @@ export const allAvailableModules = {
     documentationHref: 'https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-multimodal-embeddings',
     name: 'Google Multimodal Module'
   },
+  'multi2vec-voyageai': {
+    documentationHref: 'https://docs.voyageai.com/docs/multimodal-embeddings',
+    name: 'VoyageAI Multimodal Module'
+  },
   'qna-openai': {
     documentationHref: 'https://platform.openai.com/docs/api-reference/completions',
     name: 'OpenAI Question & Answering Module'

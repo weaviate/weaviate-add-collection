@@ -681,8 +681,10 @@ export default function Collection({
     if (replicationConfig.factor >= 2 && replicationConfig.asyncEnabled) {
       const ac = replicationConfig.asyncConfig || {};
       const asyncConfigJson = {};
-      // Coerce to a finite integer; drop NaN/Infinity/decimal/scientific so
+      // Coerce to a finite integer; drop NaN/Infinity/non-integer so
       // JSON.stringify never emits null for an unparseable value.
+      // Note: scientific notation that resolves to an integer (e.g. "1e2") is
+      // accepted because Number.isInteger(Number("1e2")) is true.
       const toFiniteInt = (value) => {
         const num = Number(value);
         return Number.isFinite(num) && Number.isInteger(num) ? num : undefined;
