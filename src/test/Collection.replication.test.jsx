@@ -543,4 +543,123 @@ describe('Collection Component - Replication Configuration', () => {
     expect(generatedJson.replicationConfig.asyncEnabled).toBe(true)
     expect(generatedJson.replicationConfig.deletionStrategy).toBe('TimeBasedResolution')
   })
+
+  // ─── asyncConfig UI interaction tests ────────────────────────────────────
+  // Helper: open the Replication Configuration section, set factor=2, enable
+  // async, and return the container plus a userEvent instance.
+  async function openSectionAndEnableAsync(container) {
+    const user = userEvent.setup()
+    await waitFor(() => {
+      expect(container.querySelector('.json-block')).toBeTruthy()
+    })
+
+    const replicationToggle = screen.getByText('Replication Configuration').closest('button')
+    await user.click(replicationToggle)
+
+    await waitFor(() => {
+      expect(container.querySelector('input[type="number"][min="1"]')).toBeTruthy()
+    })
+
+    const factorInput = container.querySelector('input[type="number"][min="1"]')
+    await user.tripleClick(factorInput)
+    await user.keyboard('2')
+
+    await waitFor(() => {
+      expect(screen.queryByText('Async Enabled:')).toBeTruthy()
+    })
+
+    const asyncCheckbox = screen.getByText('Async Enabled:').parentElement.querySelector('input[type="checkbox"]')
+    await user.click(asyncCheckbox)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Max Workers:')).toBeTruthy()
+    })
+
+    return { user }
+  }
+
+  function inputForLabel(labelText) {
+    return screen.getByText(labelText).parentElement.querySelector('input[type="number"]')
+  }
+
+  it('should write a typed asyncConfig value into the generated JSON', async () => {
+    const { container } = render(<Collection />)
+    const { user } = await openSectionAndEnableAsync(container)
+
+    const maxWorkers = inputForLabel('Max Workers:')
+    await user.type(maxWorkers, '7')
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      expect(json.replicationConfig?.asyncConfig?.maxWorkers).toBe(7)
+    })
+  })
+
+  it('should remove an asyncConfig field from JSON when the user clears its input', async () => {
+    const { container } = render(<Collection />)
+    const { user } = await openSectionAndEnableAsync(container)
+
+    const maxWorkers = inputForLabel('Max Workers:')
+    await user.type(maxWorkers, '7')
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      expect(json.replicationConfig.asyncConfig.maxWorkers).toBe(7)
+    })
+
+    await user.clear(maxWorkers)
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      // The whole asyncConfig block should be dropped (no fields populated)
+      expect(json.replicationConfig?.asyncConfig).toBeUndefined()
+    })
+  })
+
+  it('should drop asyncConfig entirely when async is disabled after values are entered', async () => {
+    const { container } = render(<Collection />)
+    const { user } = await openSectionAndEnableAsync(container)
+
+    await user.type(inputForLabel('Max Workers:'), '4')
+    await user.type(inputForLabel('Diff Batch Size:'), '500')
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      expect(json.replicationConfig.asyncConfig).toEqual({ maxWorkers: 4, diffBatchSize: 500 })
+    })
+
+    const asyncCheckbox = screen.getByText('Async Enabled:').parentElement.querySelector('input[type="checkbox"]')
+    await user.click(asyncCheckbox)
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      // When async is back to its default (off) the emitter omits both
+      // asyncEnabled and asyncConfig from replicationConfig entirely.
+      expect(json.replicationConfig?.asyncEnabled).toBeUndefined()
+      expect(json.replicationConfig?.asyncConfig).toBeUndefined()
+    })
+  })
+
+  it('should omit asyncConfig fields whose value is not a finite integer', async () => {
+    // Browsers reject most non-numeric input in <input type=number>, but
+    // decimals (e.g. "1.5") and scientific notation slip through. The
+    // serializer must drop these so JSON never emits null for a bad value.
+    const { container } = render(<Collection />)
+    const { user } = await openSectionAndEnableAsync(container)
+
+    const maxWorkers = inputForLabel('Max Workers:')
+    await user.type(maxWorkers, '1.5')
+
+    // Type a valid integer in another field so asyncConfig isn't empty
+    await user.type(inputForLabel('Diff Batch Size:'), '500')
+
+    await waitFor(() => {
+      const json = JSON.parse(container.querySelector('.json-block').textContent)
+      expect(json.replicationConfig.asyncConfig).toBeDefined()
+      // diffBatchSize is a clean integer and must round-trip
+      expect(json.replicationConfig.asyncConfig.diffBatchSize).toBe(500)
+      // maxWorkers="1.5" failed the integer check and must be omitted
+      expect(json.replicationConfig.asyncConfig.maxWorkers).toBeUndefined()
+    })
+  })
 })

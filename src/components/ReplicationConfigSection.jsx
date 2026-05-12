@@ -1,21 +1,13 @@
 import React from 'react';
 import { VersionGated } from '../context/VersionContext';
 import DOC_LINKS from '../constants/docLinks.json';
+import { DEFAULT_REPLICATION_ASYNC_CONFIG } from '../constants/replicationDefaults';
 
 const defaultConfig = {
   factor: 1,
   asyncEnabled: false,
   deletionStrategy: 'NoAutomatedResolution',
-  asyncConfig: {
-    maxWorkers: '',
-    hashtreeHeight: '',
-    frequency: '',
-    frequencyWhilePropagating: '',
-    diffBatchSize: '',
-    propagationTimeout: '',
-    propagationLimit: '',
-    propagationConcurrency: '',
-  },
+  asyncConfig: { ...DEFAULT_REPLICATION_ASYNC_CONFIG },
 };
 
 const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumber = null }) => {
@@ -107,6 +99,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Max Workers:</label>
                   <input
                     type="number"
+                    step="1"
                     min="1"
                     value={config.asyncConfig?.maxWorkers ?? ''}
                     onChange={e => updateAsyncConfig('maxWorkers', e.target.value)}
@@ -117,6 +110,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Hashtree Height:</label>
                   <input
                     type="number"
+                    step="1"
                     min="0"
                     max="20"
                     value={config.asyncConfig?.hashtreeHeight ?? ''}
@@ -129,6 +123,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Frequency (ms):</label>
                   <input
                     type="number"
+                    step="1"
                     min="0"
                     value={config.asyncConfig?.frequency ?? ''}
                     onChange={e => updateAsyncConfig('frequency', e.target.value)}
@@ -139,6 +134,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Frequency While Propagating (ms):</label>
                   <input
                     type="number"
+                    step="1"
                     min="0"
                     value={config.asyncConfig?.frequencyWhilePropagating ?? ''}
                     onChange={e => updateAsyncConfig('frequencyWhilePropagating', e.target.value)}
@@ -149,6 +145,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Diff Batch Size:</label>
                   <input
                     type="number"
+                    step="1"
                     min="1"
                     max="10000"
                     value={config.asyncConfig?.diffBatchSize ?? ''}
@@ -161,6 +158,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Propagation Timeout (s):</label>
                   <input
                     type="number"
+                    step="1"
                     min="1"
                     value={config.asyncConfig?.propagationTimeout ?? ''}
                     onChange={e => updateAsyncConfig('propagationTimeout', e.target.value)}
@@ -171,6 +169,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Propagation Limit:</label>
                   <input
                     type="number"
+                    step="1"
                     min="1"
                     max="1000000"
                     value={config.asyncConfig?.propagationLimit ?? ''}
@@ -183,6 +182,7 @@ const ReplicationConfigSection = ({ config = defaultConfig, setConfig, nodesNumb
                   <label>Propagation Concurrency:</label>
                   <input
                     type="number"
+                    step="1"
                     min="1"
                     max="20"
                     value={config.asyncConfig?.propagationConcurrency ?? ''}

@@ -10,6 +10,7 @@ import ReplicationConfigSection from './ReplicationConfigSection'
 import GenerativeConfigSection from './GenerativeConfigSection'
 import RerankerConfigSection from './RerankerConfigSection'
 import { validateCollectionName, sanitizeCollectionName } from '../utils/collectionNameValidator'
+import { DEFAULT_REPLICATION_ASYNC_CONFIG } from '../constants/replicationDefaults'
 
 // Contract:
 // Inputs: optional `initialJson` object with { name, description }
@@ -57,16 +58,7 @@ export default function Collection({
     factor: null,
     asyncEnabled: false,
     deletionStrategy: 'NoAutomatedResolution',
-    asyncConfig: {
-      maxWorkers: '',
-      hashtreeHeight: '',
-      frequency: '',
-      frequencyWhilePropagating: '',
-      diffBatchSize: '',
-      propagationTimeout: '',
-      propagationLimit: '',
-      propagationConcurrency: '',
-    },
+    asyncConfig: { ...DEFAULT_REPLICATION_ASYNC_CONFIG },
   })
   const [generativeConfig, setGenerativeConfig] = useState({
     enabled: false,
@@ -221,20 +213,14 @@ export default function Collection({
     if (initialJson?.replicationConfig && typeof initialJson.replicationConfig === 'object') {
       const cfg = initialJson.replicationConfig
       const ac = cfg.asyncConfig || {}
+      const asyncConfig = Object.fromEntries(
+        Object.keys(DEFAULT_REPLICATION_ASYNC_CONFIG).map(key => [key, ac[key] != null ? ac[key] : ''])
+      )
       setReplicationConfig({
         factor: cfg.factor ?? 1,
         asyncEnabled: cfg.asyncEnabled ?? false,
         deletionStrategy: cfg.deletionStrategy ?? 'NoAutomatedResolution',
-        asyncConfig: {
-          maxWorkers: ac.maxWorkers != null ? ac.maxWorkers : '',
-          hashtreeHeight: ac.hashtreeHeight != null ? ac.hashtreeHeight : '',
-          frequency: ac.frequency != null ? ac.frequency : '',
-          frequencyWhilePropagating: ac.frequencyWhilePropagating != null ? ac.frequencyWhilePropagating : '',
-          diffBatchSize: ac.diffBatchSize != null ? ac.diffBatchSize : '',
-          propagationTimeout: ac.propagationTimeout != null ? ac.propagationTimeout : '',
-          propagationLimit: ac.propagationLimit != null ? ac.propagationLimit : '',
-          propagationConcurrency: ac.propagationConcurrency != null ? ac.propagationConcurrency : '',
-        },
+        asyncConfig,
       })
     }
     // Load generativeConfig from imported JSON if present
@@ -695,14 +681,25 @@ export default function Collection({
     if (replicationConfig.factor >= 2 && replicationConfig.asyncEnabled) {
       const ac = replicationConfig.asyncConfig || {};
       const asyncConfigJson = {};
-      if (ac.maxWorkers !== '') asyncConfigJson.maxWorkers = parseInt(ac.maxWorkers, 10);
-      if (ac.hashtreeHeight !== '') asyncConfigJson.hashtreeHeight = parseInt(ac.hashtreeHeight, 10);
-      if (ac.frequency !== '') asyncConfigJson.frequency = parseInt(ac.frequency, 10);
-      if (ac.frequencyWhilePropagating !== '') asyncConfigJson.frequencyWhilePropagating = parseInt(ac.frequencyWhilePropagating, 10);
-      if (ac.diffBatchSize !== '') asyncConfigJson.diffBatchSize = parseInt(ac.diffBatchSize, 10);
-      if (ac.propagationTimeout !== '') asyncConfigJson.propagationTimeout = parseInt(ac.propagationTimeout, 10);
-      if (ac.propagationLimit !== '') asyncConfigJson.propagationLimit = parseInt(ac.propagationLimit, 10);
-      if (ac.propagationConcurrency !== '') asyncConfigJson.propagationConcurrency = parseInt(ac.propagationConcurrency, 10);
+      // Coerce to a finite integer; drop NaN/Infinity/decimal/scientific so
+      // JSON.stringify never emits null for an unparseable value.
+      const toFiniteInt = (value) => {
+        const num = Number(value);
+        return Number.isFinite(num) && Number.isInteger(num) ? num : undefined;
+      };
+      const setIfInt = (key) => {
+        if (ac[key] === '' || ac[key] === null || ac[key] === undefined) return;
+        const v = toFiniteInt(ac[key]);
+        if (v !== undefined) asyncConfigJson[key] = v;
+      };
+      setIfInt('maxWorkers');
+      setIfInt('hashtreeHeight');
+      setIfInt('frequency');
+      setIfInt('frequencyWhilePropagating');
+      setIfInt('diffBatchSize');
+      setIfInt('propagationTimeout');
+      setIfInt('propagationLimit');
+      setIfInt('propagationConcurrency');
       if (Object.keys(asyncConfigJson).length > 0) {
         replicationJson.asyncConfig = asyncConfigJson;
       }
