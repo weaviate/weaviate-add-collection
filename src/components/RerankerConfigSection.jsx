@@ -1,20 +1,24 @@
 import React from 'react'
 import { allAvailableModules } from '../constants/options'
 import { getRerankerConfigFields, hasRerankerConfigOptions } from '../utils/moduleConfigExtractor'
+import { useVersionFilteredOptions } from '../context/VersionContext'
 import ModuleConfigField from './ModuleConfigField'
 
 /**
  * Component for configuring reranker capabilities
  */
 export default function RerankerConfigSection({ config, setConfig }) {
-  const rerankerModules = Object.entries(allAvailableModules)
-    .filter(([key]) => key.startsWith('reranker-'))
-    .map(([key, value]) => ({
-      value: key,
-      label: value.name || key,
-      documentationHref: value.documentationHref
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label))
+  const rerankerModules = useVersionFilteredOptions(
+    Object.entries(allAvailableModules)
+      .filter(([key]) => key.startsWith('reranker-'))
+      .map(([key, value]) => ({
+        value: key,
+        label: value.name || key,
+        documentationHref: value.documentationHref,
+        featureId: value.featureId
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  )
 
   const update = (field, value) => {
     setConfig({ ...config, [field]: value })
@@ -46,8 +50,8 @@ export default function RerankerConfigSection({ config, setConfig }) {
         >
           <option value="">None (disabled)</option>
           {rerankerModules.map((mod) => (
-            <option key={mod.value} value={mod.value}>
-              {mod.label}
+            <option key={mod.value} value={mod.value} disabled={mod.disabled}>
+              {mod.label}{mod.helpText ? ` — ${mod.helpText}` : ''}
             </option>
           ))}
         </select>

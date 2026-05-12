@@ -76,11 +76,11 @@ describe('Collection Component - Generative Configuration', () => {
     const jsonBlock = container.querySelector('.json-block')
     const generatedJson = JSON.parse(jsonBlock.textContent)
 
-    // Verify generative config is present
-    expect(generatedJson.generative).toBeDefined()
-    expect(generatedJson.generative['generative-openai']).toBeDefined()
-    expect(generatedJson.generative['generative-openai'].model).toBe('gpt-4')
-    expect(generatedJson.generative['generative-openai'].baseURL).toBe('https://api.openai.com/v1')
+    // Verify generative config is present (emitted under moduleConfig)
+    expect(generatedJson.moduleConfig).toBeDefined()
+    expect(generatedJson.moduleConfig['generative-openai']).toBeDefined()
+    expect(generatedJson.moduleConfig['generative-openai'].model).toBe('gpt-4')
+    expect(generatedJson.moduleConfig['generative-openai'].baseURL).toBe('https://api.openai.com/v1')
   })
 
   it('should handle different generative modules', async () => {
@@ -113,8 +113,8 @@ describe('Collection Component - Generative Configuration', () => {
     await waitFor(() => {
       const jsonBlock = container.querySelector('.json-block')
       const generatedJson = JSON.parse(jsonBlock.textContent)
-      expect(generatedJson.generative).toBeDefined()
-      expect(generatedJson.generative['generative-openai']).toBeDefined()
+      expect(generatedJson.moduleConfig).toBeDefined()
+      expect(generatedJson.moduleConfig['generative-openai']).toBeDefined()
     })
   })
 
@@ -203,8 +203,8 @@ describe('Collection Component - Generative Configuration', () => {
       const jsonBlock = container.querySelector('.json-block')
       const generatedJson = JSON.parse(jsonBlock.textContent)
       expect(generatedJson.class).toBe('TestCollection')
-      expect(generatedJson.generative).toBeDefined()
-      expect(generatedJson.generative['generative-openai']).toBeDefined()
+      expect(generatedJson.moduleConfig).toBeDefined()
+      expect(generatedJson.moduleConfig['generative-openai']).toBeDefined()
     })
   })
 })

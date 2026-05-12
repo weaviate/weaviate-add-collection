@@ -4,6 +4,7 @@
   "invertedIndex": "https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index#inverted-index-parameters",
   "replication": "https://docs.weaviate.io/weaviate/manage-collections/multi-node-setup",
   "replicationAsyncEnabled": "https://docs.weaviate.io/deploy/configuration/replication#async-replication-settings",
+  "replicationAsyncConfig": "https://docs.weaviate.io/weaviate/config-refs/collections#async-config",
   "reranker": "https://docs.weaviate.io/weaviate/search/rerank#rerank-vector-search-results",
   "generative": "https://docs.weaviate.io/weaviate/manage-collections/generative-reranker-models#specify-a-generative-model-integration",
   "vectorConfig": "https://docs.weaviate.io/weaviate/manage-collections/vector-config",

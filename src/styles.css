@@ -165,6 +165,10 @@ body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Rob
 .module-config-form .field label{display:flex;align-items:center;gap:4px}
 .module-config-form .field label input[type="checkbox"]{margin-right:8px}
 
+/* Nested sub-section (e.g. asyncConfig inside replication) */
+.nested-section{margin-top:16px;padding:16px;background:#f9fafb;border:1px solid #e6e9ef;border-radius:8px}
+.nested-section-title{display:flex;align-items:center;gap:4px;font-weight:600;font-size:14px;color:#333;margin-bottom:12px}
+
 /* Tabs styles */
 .tabs{margin-top:16px}
 .tabs-header{display:flex;gap:4px;border-bottom:2px solid #e6e9ef;margin-bottom:16px}

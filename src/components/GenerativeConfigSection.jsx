@@ -1,20 +1,24 @@
 import React from 'react'
 import { allAvailableModules } from '../constants/options'
 import { getGenerativeConfigFields, hasGenerativeConfigOptions } from '../utils/moduleConfigExtractor'
+import { useVersionFilteredOptions } from '../context/VersionContext'
 import ModuleConfigField from './ModuleConfigField'
 
 /**
  * Component for configuring generative search capabilities (RAG)
  */
 export default function GenerativeConfigSection({ config, setConfig }) {
-  const generativeModules = Object.entries(allAvailableModules)
-    .filter(([key]) => key.startsWith('generative-'))
-    .map(([key, value]) => ({
-      value: key,
-      label: value.name || key,
-      documentationHref: value.documentationHref
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label))
+  const generativeModules = useVersionFilteredOptions(
+    Object.entries(allAvailableModules)
+      .filter(([key]) => key.startsWith('generative-'))
+      .map(([key, value]) => ({
+        value: key,
+        label: value.name || key,
+        documentationHref: value.documentationHref,
+        featureId: value.featureId
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  )
 
   const update = (field, value) => {
     setConfig({ ...config, [field]: value })
@@ -64,8 +68,8 @@ export default function GenerativeConfigSection({ config, setConfig }) {
             >
               <option value="">Select a generative module...</option>
               {generativeModules.map((mod) => (
-                <option key={mod.value} value={mod.value}>
-                  {mod.label}
+                <option key={mod.value} value={mod.value} disabled={mod.disabled}>
+                  {mod.label}{mod.helpText ? ` — ${mod.helpText}` : ''}
                 </option>
               ))}
             </select>

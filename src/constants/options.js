@@ -57,6 +57,11 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.cohere.com/reference/chat',
     name: 'Generative Search - Cohere'
   },
+  'generative-contextualai': {
+    documentationHref: 'https://docs.contextual.ai/api-reference/generate/generate',
+    name: 'Generative Search - Contextual AI',
+    featureId: 'generativeContextualai'
+  },
   'generative-databricks': {
     documentationHref: 'https://docs.databricks.com/en/generative-ai/generative-ai.html',
     name: 'Generative Search - Databricks'
@@ -97,6 +102,10 @@ export const allAvailableModules = {
     documentationHref: 'https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-multimodal-embeddings',
     name: 'Google Multimodal Module'
   },
+  'multi2vec-voyageai': {
+    documentationHref: 'https://docs.voyageai.com/docs/multimodal-embeddings',
+    name: 'VoyageAI Multimodal Module'
+  },
   'qna-openai': {
     documentationHref: 'https://platform.openai.com/docs/api-reference/completions',
     name: 'OpenAI Question & Answering Module'
@@ -107,6 +116,11 @@ export const allAvailableModules = {
   'reranker-cohere': {
     documentationHref: 'https://txt.cohere.com/rerank/',
     name: 'Reranker - Cohere'
+  },
+  'reranker-contextualai': {
+    documentationHref: 'https://docs.contextual.ai/api-reference/rerank/rerank',
+    name: 'Reranker - Contextual AI',
+    featureId: 'rerankerContextualai'
   },
   'reranker-jinaai': {
     documentationHref: 'https://jina.ai/reranker',
@@ -180,7 +194,8 @@ export function getVectorizerModuleOptions(availableModules = null) {
     .map(([key, value]) => ({
       value: key,
       label: value.name || key,
-      documentationHref: value.documentationHref
+      documentationHref: value.documentationHref,
+      featureId: value.featureId
     }))
     .sort((a, b) => a.label.localeCompare(b.label))
 }

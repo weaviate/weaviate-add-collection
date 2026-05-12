@@ -17,6 +17,7 @@ export const VERSION_FEATURES = {
   // Replication
   replicationAsyncEnabled:     '1.29.0',
   replicationDeletionStrategy: '1.28.0',
+  replicationAsyncConfig:      '1.36.0',
 
   // Vector index types & compression
   dynamicIndexType:            '1.25.0',
@@ -35,4 +36,8 @@ export const VERSION_FEATURES = {
   tokenizationTrigram:         '1.24.0',
   tokenizationKagomeKr:        '1.25.7',
   tokenizationKagomeJa:        '1.28.0',
+
+  // Modules
+  generativeContextualai:      '1.34.0',
+  rerankerContextualai:        '1.34.0',
 }

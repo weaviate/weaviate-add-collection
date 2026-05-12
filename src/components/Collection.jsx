@@ -10,6 +10,7 @@ import ReplicationConfigSection from './ReplicationConfigSection'
 import GenerativeConfigSection from './GenerativeConfigSection'
 import RerankerConfigSection from './RerankerConfigSection'
 import { validateCollectionName, sanitizeCollectionName } from '../utils/collectionNameValidator'
+import { DEFAULT_REPLICATION_ASYNC_CONFIG } from '../constants/replicationDefaults'
 
 // Contract:
 // Inputs: optional `initialJson` object with { name, description }
@@ -57,6 +58,7 @@ export default function Collection({
     factor: null,
     asyncEnabled: false,
     deletionStrategy: 'NoAutomatedResolution',
+    asyncConfig: { ...DEFAULT_REPLICATION_ASYNC_CONFIG },
   })
   const [generativeConfig, setGenerativeConfig] = useState({
     enabled: false,
@@ -210,10 +212,15 @@ export default function Collection({
     // Load replicationConfig from imported JSON if present
     if (initialJson?.replicationConfig && typeof initialJson.replicationConfig === 'object') {
       const cfg = initialJson.replicationConfig
+      const ac = cfg.asyncConfig || {}
+      const asyncConfig = Object.fromEntries(
+        Object.keys(DEFAULT_REPLICATION_ASYNC_CONFIG).map(key => [key, ac[key] != null ? ac[key] : ''])
+      )
       setReplicationConfig({
         factor: cfg.factor ?? 1,
         asyncEnabled: cfg.asyncEnabled ?? false,
         deletionStrategy: cfg.deletionStrategy ?? 'NoAutomatedResolution',
+        asyncConfig,
       })
     }
     // Load generativeConfig from imported JSON if present
@@ -668,6 +675,36 @@ export default function Collection({
     // Only include deletionStrategy if asyncEnabled is true and factor >= 2
     if (replicationConfig.factor >= 2 && replicationConfig.asyncEnabled && replicationConfig.deletionStrategy !== defaults.deletionStrategy) {
       replicationJson.deletionStrategy = replicationConfig.deletionStrategy;
+    }
+
+    // Only include asyncConfig if asyncEnabled is true and at least one field is set
+    if (replicationConfig.factor >= 2 && replicationConfig.asyncEnabled) {
+      const ac = replicationConfig.asyncConfig || {};
+      const asyncConfigJson = {};
+      // Coerce to a finite integer; drop NaN/Infinity/non-integer so
+      // JSON.stringify never emits null for an unparseable value.
+      // Note: scientific notation that resolves to an integer (e.g. "1e2") is
+      // accepted because Number.isInteger(Number("1e2")) is true.
+      const toFiniteInt = (value) => {
+        const num = Number(value);
+        return Number.isFinite(num) && Number.isInteger(num) ? num : undefined;
+      };
+      const setIfInt = (key) => {
+        if (ac[key] === '' || ac[key] === null || ac[key] === undefined) return;
+        const v = toFiniteInt(ac[key]);
+        if (v !== undefined) asyncConfigJson[key] = v;
+      };
+      setIfInt('maxWorkers');
+      setIfInt('hashtreeHeight');
+      setIfInt('frequency');
+      setIfInt('frequencyWhilePropagating');
+      setIfInt('diffBatchSize');
+      setIfInt('propagationTimeout');
+      setIfInt('propagationLimit');
+      setIfInt('propagationConcurrency');
+      if (Object.keys(asyncConfigJson).length > 0) {
+        replicationJson.asyncConfig = asyncConfigJson;
+      }
     }
 
     setGeneratedJson((prev) => {
