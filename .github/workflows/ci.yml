@@ -12,6 +12,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    services:
+      weaviate:
+        image: cr.weaviate.io/semitechnologies/weaviate:1.37.3
+        ports:
+          - 8080:8080
+          - 50051:50051
+        env:
+          AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+          PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+          DEFAULT_VECTORIZER_MODULE: "none"
+          CLUSTER_HOSTNAME: "node1"
+          QUERY_DEFAULTS_LIMIT: "25"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +38,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Wait for Weaviate
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/v1/.well-known/ready >/dev/null; then
+              echo "Weaviate is ready"
+              exit 0
+            fi
+            echo "Waiting for Weaviate... ($i/30)"
+            sleep 2
+          done
+          echo "Weaviate failed to become ready"
+          curl -v http://localhost:8080/v1/.well-known/ready || true
+          exit 1
 
       - name: Run tests
         run: npm run test:run
