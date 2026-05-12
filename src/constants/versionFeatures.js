@@ -36,4 +36,8 @@ export const VERSION_FEATURES = {
   tokenizationTrigram:         '1.24.0',
   tokenizationKagomeKr:        '1.25.7',
   tokenizationKagomeJa:        '1.28.0',
+
+  // Modules
+  generativeContextualai:      '1.34.0',
+  rerankerContextualai:        '1.34.0',
 }

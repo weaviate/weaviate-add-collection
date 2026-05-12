@@ -138,11 +138,13 @@ const VECTORIZER_CONFIG_FIELDS = {
   'multi2vec-voyageai': {
     fields: [
       { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },
+      { name: 'dimensions', type: 'number', description: 'The dimensionality of the vector once embedded. Supported: 256, 512, 1024 (default), 2048.' },
       { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' },
-      { name: 'model', type: 'string', description: 'The model to use.' },
+      { name: 'model', type: 'string', description: 'The model to use (e.g., voyage-multimodal-3, voyage-multimodal-3.5).' },
       { name: 'outputEncoding', type: 'string', description: 'How the output from the model should be encoded on return.' },
       { name: 'textFields', type: 'string[]', description: 'The text fields used when vectorizing.' },
       { name: 'truncate', type: 'boolean', description: 'Whether the input should be truncated to fit in the context window.' },
+      { name: 'videoFields', type: 'string[]', description: 'The video fields used when vectorizing (requires voyage-multimodal-3.5).' },
       { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
     ]
   },
@@ -363,6 +365,16 @@ const GENERATIVE_CONFIG_FIELDS = {
       { name: 'temperatureProperty', type: 'number', description: 'Temperature for response generation (property-level).' }
     ]
   },
+  'generative-contextualai': {
+    fields: [
+      { name: 'model', type: 'string', description: 'The Contextual AI GLM model to use (e.g., v2).' },
+      { name: 'temperature', type: 'number', description: 'Temperature for response generation.' },
+      { name: 'topP', type: 'number', description: 'Top-p sampling parameter.' },
+      { name: 'maxNewTokens', type: 'number', description: 'Maximum number of new tokens to generate.' },
+      { name: 'systemPrompt', type: 'string', description: 'System prompt to prepend to generation.' },
+      { name: 'avoidCommentary', type: 'boolean', description: 'Whether to avoid commentary in the output.' }
+    ]
+  },
   'generative-databricks': {
     fields: [
       { name: 'endpoint', type: 'string', required: true, description: 'The Databricks endpoint URL.' },
@@ -434,7 +446,15 @@ const GENERATIVE_CONFIG_FIELDS = {
 const RERANKER_CONFIG_FIELDS = {
   'reranker-cohere': {
     fields: [
+      { name: 'baseURL', type: 'string', description: 'The base URL where API requests should go.' },
       { name: 'model', type: 'string', description: 'The Cohere reranker model to use (e.g., rerank-english-v2.0, rerank-multilingual-v2.0).' }
+    ]
+  },
+  'reranker-contextualai': {
+    fields: [
+      { name: 'model', type: 'string', description: 'The Contextual AI reranker model (e.g., ctxl-rerank-v2-instruct-multilingual, ctxl-rerank-v1-instruct).' },
+      { name: 'instruction', type: 'string', description: 'Instruction guiding the reranker (e.g., domain-specific guidance).' },
+      { name: 'topN', type: 'number', description: 'Number of top results to return after reranking.' }
     ]
   },
   'reranker-jinaai': {

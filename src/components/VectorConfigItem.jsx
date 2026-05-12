@@ -14,7 +14,7 @@ export default function VectorConfigItem({
 }) {
   const [activeTab, setActiveTab] = useState('vectorizer')
   const [dynamicSubTab, setDynamicSubTab] = useState('hnsw')
-  const vectorizerOptions = getVectorizerModuleOptions(availableModules)
+  const vectorizerOptions = useVersionFilteredOptions(getVectorizerModuleOptions(availableModules))
 
   // Version-filtered index type options (removes 'dynamic' if below 1.25.0)
   const filteredIndexTypeOptions = useVersionFilteredOptions(indexTypeOptions)
@@ -304,8 +304,8 @@ export default function VectorConfigItem({
                       >
                         <option value="">Select a vectorizer module...</option>
                         {vectorizerOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
+                          <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                            {opt.label}{opt.helpText ? ` — ${opt.helpText}` : ''}
                           </option>
                         ))}
                       </select>
