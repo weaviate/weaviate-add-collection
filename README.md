@@ -1,5 +1,7 @@
 # Weaviate Add Collection (minimal)
 
+**[Live demo → weaviate.github.io/weaviate-add-collection](https://weaviate.github.io/weaviate-add-collection/)**
+
 A minimal React app (Vite) with a Collection component to compose a Weaviate collection JSON.
 
 [This project is used in Weaviate Studio](https://github.com/muleyprasad/weaviate-studio/)
@@ -20,21 +22,31 @@ npm run dev
 
 ## Using as a Package
 
+```bash
+npm install @weaviate/add-collection
+```
+
+`react` and `react-dom` (18 or 19) are peer dependencies. The package ships prebuilt ESM and CommonJS bundles in `lib/`; styles are imported separately:
+
+```javascript
+import '@weaviate/add-collection/styles.css';
+```
+
 You can import the `Collection` component into your own React application:
 
 ```javascript
 // Default import
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 // Named import
-import { Collection } from 'weaviate-add-collection';
+import { Collection } from '@weaviate/add-collection';
 ```
 
 ### Example Usage
 
 ```jsx
 import React from 'react';
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 function App() {
   return (
@@ -68,7 +80,7 @@ Instead of scraping the DOM to get the generated schema, you can use the callbac
 
 ```jsx
 import React from 'react';
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 function App() {
   const handleSchemaChange = (schema) => {
