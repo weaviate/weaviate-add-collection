@@ -27,5 +27,8 @@
   "indexHnsw": "https://docs.weaviate.io/weaviate/config-refs/indexing/vector-index#hnsw-index",
   "indexFlat": "https://docs.weaviate.io/weaviate/config-refs/indexing/vector-index#flat-index",
   "indexDynamic": "https://docs.weaviate.io/weaviate/config-refs/indexing/vector-index#dynamic-index",
-  "indexHfresh": "https://docs.weaviate.io/weaviate/config-refs/indexing/vector-index#hfresh-index"
+  "indexHfresh": "https://docs.weaviate.io/weaviate/config-refs/indexing/vector-index#hfresh-index",
+  "textAnalyzer": "https://weaviate.io/blog/tokenization-text-analysis-weaviate",
+  "stopwordPresets": "https://weaviate.io/blog/tokenization-text-analysis-weaviate",
+  "sharding": "https://docs.weaviate.io/weaviate/config-refs/collections#sharding"
 }

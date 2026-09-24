@@ -23,6 +23,108 @@ function readJson(container) {
   return JSON.parse(container.querySelector('.json-block').textContent)
 }
 
+// The Vectorizer Configuration section is collapsed on first render and starts
+// with no vector configs, so the module dropdown only exists after adding one.
+async function openVectorConfig(user) {
+  await user.click(screen.getByRole('button', { name: /vectorizer configuration/i }))
+  await user.click(screen.getByRole('button', { name: /add vector config/i }))
+}
+
+// "Vectorizer Module" is also the name of the tab button, so match the <label>.
+function vectorizerSelect(container) {
+  const label = Array.from(container.querySelectorAll('label'))
+    .find(l => l.textContent.trim() === 'Vectorizer Module')
+  return label.parentElement.querySelector('select')
+}
+
+function optionFor(select, value) {
+  return Array.from(select.options).find(o => o.value === value)
+}
+
+// ─── text2vec-digitalocean (TS client v3.13.1, Weaviate 1.38.0) ──────────────
+
+describe('text2vec-digitalocean', () => {
+  it('is offered in the vectorizer dropdown', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    expect(optionFor(vectorizerSelect(container), 'text2vec-digitalocean')).toBeTruthy()
+  })
+
+  it('is enabled when no version is set', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    expect(optionFor(vectorizerSelect(container), 'text2vec-digitalocean').disabled).toBe(false)
+  })
+
+  it('is enabled for Weaviate >= 1.38.0', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.38.0" />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    expect(optionFor(vectorizerSelect(container), 'text2vec-digitalocean').disabled).toBe(false)
+  })
+
+  // The module did not ship until 1.38.0 -- a 1.37.x server has no such module,
+  // so offering it there would produce a schema the server rejects.
+  it('is disabled with help text one patch below the minimum', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.37.9" />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    const opt = optionFor(vectorizerSelect(container), 'text2vec-digitalocean')
+    expect(opt.disabled).toBe(true)
+    expect(opt.textContent).toContain('1.38.0')
+  })
+
+  it('round-trips model and baseURL through import', async () => {
+    const { container } = render(
+      <Collection initialJson={{
+        class: 'Article',
+        vectorConfig: {
+          default: {
+            vectorizer: {
+              'text2vec-digitalocean': {
+                model: 'qwen3-embedding-0.6b',
+                baseURL: 'https://inference.do-ai.run',
+              },
+            },
+            vectorIndexType: 'hnsw',
+          },
+        },
+      }} />
+    )
+    await waitForRender(container)
+
+    const config = readJson(container).vectorConfig.default.vectorizer['text2vec-digitalocean']
+    expect(config.model).toBe('qwen3-embedding-0.6b')
+    expect(config.baseURL).toBe('https://inference.do-ai.run')
+  })
+
+  it('marks model as required in the config form', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    await user.selectOptions(vectorizerSelect(container), 'text2vec-digitalocean')
+
+    await waitFor(() => {
+      const labels = Array.from(container.querySelectorAll('label')).map(l => l.textContent.trim())
+      // The asterisk is how ModuleConfigField marks a required field.
+      expect(labels).toContain('model *')
+      expect(labels).toContain('baseURL')
+    })
+  })
+})
+
 // ─── Generative dropdown — Contextual AI gating ──────────────────────────────
 
 describe('Generative module dropdown — Contextual AI version gating', () => {

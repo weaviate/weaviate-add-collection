@@ -1,15 +1,41 @@
 {
-  "name": "weaviate-add-collection",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@weaviate/add-collection",
+  "version": "1.0.0",
+  "description": "React component for visually building Weaviate collection schemas",
+  "keywords": [
+    "weaviate",
+    "react",
+    "schema",
+    "collection",
+    "vector-database"
+  ],
+  "homepage": "https://weaviate.github.io/weaviate-add-collection/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weaviate/weaviate-add-collection.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weaviate/weaviate-add-collection/issues"
+  },
   "type": "module",
-  "main": "./index.js",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.js",
   "exports": {
     ".": {
-      "import": "./index.js",
-      "require": "./index.js"
-    }
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs"
+    },
+    "./styles.css": "./src/styles.css",
+    "./package.json": "./package.json"
   },
+  "files": [
+    "lib",
+    "src/styles.css",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,12 +43,13 @@
     "deploy": "gh-pages -d dist",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "build:lib": "vite build --config vite.lib.config.js",
+    "prepare": "npm run build:lib"
   },
-  "dependencies": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "weaviate-client": "^3.11.0"
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -33,7 +60,14 @@
     "gh-pages": "^6.1.0",
     "happy-dom": "^20.0.10",
     "jsdom": "^27.0.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "vite": "^5.2.0",
-    "vitest": "^4.0.5"
+    "vitest": "^4.0.5",
+    "weaviate-client": "^3.14.0"
+  },
+  "license": "BSD-3-Clause",
+  "publishConfig": {
+    "access": "public"
   }
 }

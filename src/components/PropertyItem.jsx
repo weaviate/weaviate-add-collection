@@ -3,9 +3,11 @@ import { tokenizationOptions, dataTypeOptions } from '../constants/options'
 import DOC_LINKS from '../constants/docLinks.json'
 import { validatePropertyName, sanitizePropertyName } from '../utils/propertyNameValidator'
 import NestedPropertySection from './NestedPropertySection'
+import TagInput from './TagInput'
 import { VersionGated, useVersionFilteredOptions } from '../context/VersionContext'
+import { createDefaultTextAnalyzer, BUILTIN_STOPWORD_PRESETS } from '../constants/tokenizationDefaults'
 
-export default function PropertyItem({ value, onChange, onDelete, index, isNested = false, depth = 0 }) {
+export default function PropertyItem({ value, onChange, onDelete, index, isNested = false, depth = 0, stopwordPresetNames = [] }) {
   const filteredTokenizationOptions = useVersionFilteredOptions(tokenizationOptions)
   const [nameValidation, setNameValidation] = useState({ valid: true, error: null, warning: null })
   
@@ -35,6 +37,14 @@ export default function PropertyItem({ value, onChange, onDelete, index, isNeste
         update('name', sanitized)
       }
     }
+  }
+
+  function updateTextAnalyzer(field, fieldValue) {
+    update('textAnalyzer', {
+      ...createDefaultTextAnalyzer(),
+      ...(value.textAnalyzer || {}),
+      [field]: fieldValue,
+    })
   }
 
   function updateDataType(val) {
@@ -180,6 +190,78 @@ export default function PropertyItem({ value, onChange, onDelete, index, isNeste
             </small>
           </div>
 
+          <VersionGated featureId="textAnalyzer">
+            <div className="nested-section">
+              <div className="nested-section-title">
+                Text Analyzer
+                {DOC_LINKS.textAnalyzer && (
+                  <a href={DOC_LINKS.textAnalyzer} target="_blank" rel="noopener noreferrer" title="View documentation" style={{ marginLeft: '6px', verticalAlign: 'middle' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="View documentation">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                  </a>
+                )}
+              </div>
+
+              <div className="field">
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={value.textAnalyzer?.asciiFold || false}
+                    onChange={(e) => updateTextAnalyzer('asciiFold', e.target.checked)}
+                    style={{ width: 'auto', marginRight: '8px' }}
+                  />
+                  <span>ASCII Fold</span>
+                </label>
+                <small className="hint">
+                  Folds accents and diacritics to their base characters, so “école” matches “ecole”.
+                  Cannot be changed after the property is created.
+                </small>
+              </div>
+
+              {value.textAnalyzer?.asciiFold && (
+                <div className="field">
+                  <TagInput
+                    tags={value.textAnalyzer?.asciiFoldIgnore || []}
+                    setTags={(tags) => updateTextAnalyzer('asciiFoldIgnore', tags)}
+                    label="ASCII Fold Ignore"
+                    placeholder="Add character"
+                  />
+                  <small className="hint">
+                    Characters to leave unfolded. Editable later, but changes only affect data
+                    indexed afterwards — existing objects are not re-indexed.
+                  </small>
+                </div>
+              )}
+
+              {/* The server only honours stopwordPreset for 'word' tokenization. */}
+              {(value.tokenization || 'word') === 'word' && (
+                <div className="field">
+                  <label>Stopword Preset</label>
+                  <select
+                    value={value.textAnalyzer?.stopwordPreset || ''}
+                    onChange={(e) => updateTextAnalyzer('stopwordPreset', e.target.value)}
+                  >
+                    <option value="">Use collection default</option>
+                    {BUILTIN_STOPWORD_PRESETS.map((preset) => (
+                      <option key={preset} value={preset}>{preset}</option>
+                    ))}
+                    {stopwordPresetNames
+                      .filter((preset) => !BUILTIN_STOPWORD_PRESETS.includes(preset))
+                      .map((preset) => (
+                        <option key={preset} value={preset}>{preset}</option>
+                      ))}
+                  </select>
+                  <small className="hint">
+                    Overrides the collection-level stopwords for this property. Define your own
+                    presets under Inverted Index Configuration.
+                  </small>
+                </div>
+              )}
+            </div>
+          </VersionGated>
+
           <div className="field">
             <h5 style={{ margin: '12px 0 8px 0', fontSize: '14px', fontWeight: 600 }}>Vectorization Settings (per-property)</h5>
             <small className="hint" style={{ display: 'block', marginBottom: '12px' }}>
@@ -222,9 +304,10 @@ export default function PropertyItem({ value, onChange, onDelete, index, isNeste
 
       {value.dataType === 'object' && (
         <NestedPropertySection 
-          nestedProperties={value.nestedProperties || []} 
+          nestedProperties={value.nestedProperties || []}
           onChange={updateNestedProperties}
           depth={depth + 1}
+          stopwordPresetNames={stopwordPresetNames}
         />
       )}
 

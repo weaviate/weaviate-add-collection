@@ -3,7 +3,8 @@ export const tokenizationOptions = [
   { value: 'lowercase', label: 'Lowercase', description: 'Splits on whitespace and lowercases. Preserves symbols like @, _, and -.' },
   { value: 'whitespace', label: 'Whitespace', description: 'Splits on whitespace, preserves case and symbols. Use for case-sensitive data.' },
   { value: 'field', label: 'Field', description: 'No splitting — the entire value is one token. Use for exact-match fields.' },
-  { value: 'gse', label: 'GSE', description: 'Chinese text segmentation using the Jieba algorithm. For languages without word boundaries.', featureId: 'tokenizationGse' },
+  { value: 'gse', label: 'GSE', description: 'Segmentation for languages without word boundaries. Requires ENABLE_TOKENIZER_GSE=true on the server.', featureId: 'tokenizationGse' },
+  { value: 'gse_ch', label: 'GSE CH', description: 'GSE segmentation with Chinese dictionaries, loaded separately from GSE. Requires ENABLE_TOKENIZER_GSE_CH=true on the server.', featureId: 'tokenizationGseCh' },
   { value: 'trigram', label: 'Trigram', description: 'Divides text into character trigrams. Designed for CJK (Chinese, Japanese, Korean) languages.', featureId: 'tokenizationTrigram' },
   { value: 'kagome_ja', label: 'Kagome JA', description: 'Japanese morphological analysis for accurate Japanese text segmentation.', featureId: 'tokenizationKagomeJa' },
   { value: 'kagome_kr', label: 'Kagome KR', description: 'Korean morphological analysis for accurate Korean text segmentation.', featureId: 'tokenizationKagomeKr' }
@@ -94,6 +95,30 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.x.ai/api',
     name: 'Generative Search - xAI'
   },
+  'img2vec-neural': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/modules/img2vec-neural',
+    name: 'Img2Vec Neural Module'
+  },
+  'multi2multivec-jinaai': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/jinaai/embeddings-colbert',
+    name: 'JinaAI Multimodal Multi-Vector Module'
+  },
+  'multi2multivec-weaviate': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/weaviate/embeddings-multimodal',
+    name: 'Weaviate Multimodal Multi-Vector Module'
+  },
+  'multi2vec-aws': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/aws/embeddings',
+    name: 'AWS Multimodal Module'
+  },
+  'multi2vec-bind': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/imagebind/embeddings-multimodal',
+    name: 'ImageBind Multimodal Module'
+  },
+  'multi2vec-clip': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/transformers/embeddings-multimodal',
+    name: 'CLIP Multimodal Module'
+  },
   'multi2vec-cohere': {
     documentationHref: 'https://docs.cohere.com/docs/embed-2',
     name: 'Cohere Multimodal Module'
@@ -101,6 +126,18 @@ export const allAvailableModules = {
   'multi2vec-google': {
     documentationHref: 'https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-multimodal-embeddings',
     name: 'Google Multimodal Module'
+  },
+  'multi2vec-google-gemini': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/google/embeddings-multimodal',
+    name: 'Google Gemini Multimodal Module'
+  },
+  'multi2vec-jinaai': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/jinaai/embeddings-multimodal',
+    name: 'JinaAI Multimodal Module'
+  },
+  'multi2vec-nvidia': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/nvidia/embeddings-multimodal',
+    name: 'NVIDIA Multimodal Module'
   },
   'multi2vec-voyageai': {
     documentationHref: 'https://docs.voyageai.com/docs/multimodal-embeddings',
@@ -138,17 +175,50 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.voyageai.com/reference/reranker-api',
     name: 'Reranker - VoyageAI'
   },
+  'text2multivec-jinaai': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/jinaai/embeddings-colbert',
+    name: 'JinaAI Multi-Vector (ColBERT) Module'
+  },
   'text2vec-aws': {
     documentationHref: 'https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html',
     name: 'AWS Module'
+  },
+  'text2vec-azure-openai': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/openai-azure/embeddings',
+    name: 'Azure OpenAI Module'
   },
   'text2vec-cohere': {
     documentationHref: 'https://docs.cohere.ai/embedding-wiki/',
     name: 'Cohere Module'
   },
+  'text2vec-contextionary': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/modules/text2vec-contextionary',
+    name: 'Contextionary Module'
+  },
+  'text2vec-digitalocean': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/digitalocean/embeddings',
+    name: 'DigitalOcean Module',
+    featureId: 'vectorizerDigitalocean'
+  },
+  'text2vec-databricks': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/databricks/embeddings',
+    name: 'Databricks Module'
+  },
   'text2vec-google': {
     documentationHref: 'https://cloud.google.com/vertex-ai/docs/generative-ai/embeddings/get-text-embeddings',
     name: 'Google Module'
+  },
+  'text2vec-google-ai-studio': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/google/embeddings',
+    name: 'Google AI Studio Module (deprecated — use Google Gemini)'
+  },
+  'text2vec-google-gemini': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/google/embeddings',
+    name: 'Google Gemini Module'
+  },
+  'text2vec-gpt4all': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/gpt4all/embeddings',
+    name: 'GPT4All Module'
   },
   'text2vec-huggingface': {
     documentationHref: 'https://huggingface.co/docs/api-inference/detailed_parameters#feature-extraction-task',
@@ -162,6 +232,18 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.mistral.ai/api/#operation/createEmbedding',
     name: 'Mistral Module'
   },
+  'text2vec-model2vec': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/model2vec/embeddings',
+    name: 'Model2Vec Module'
+  },
+  // No docs.weaviate.io page exists for this module yet, so no documentationHref.
+  'text2vec-morph': {
+    name: 'Morph Module'
+  },
+  'text2vec-nvidia': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/nvidia/embeddings',
+    name: 'NVIDIA Module'
+  },
   'text2vec-ollama': {
     documentationHref: 'https://github.com/ollama/ollama/blob/main/docs/api.md#generate-embeddings',
     name: 'Ollama Module'
@@ -169,6 +251,10 @@ export const allAvailableModules = {
   'text2vec-openai': {
     documentationHref: 'https://platform.openai.com/docs/guides/embeddings/what-are-embeddings',
     name: 'OpenAI Module'
+  },
+  'text2vec-transformers': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/transformers/embeddings',
+    name: 'Transformers Module'
   },
   'text2vec-voyageai': {
     documentationHref: 'https://docs.voyageai.com/docs/embeddings',

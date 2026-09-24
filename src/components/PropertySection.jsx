@@ -12,7 +12,7 @@ const emptyProperty = () => ({
   tokenization: 'word'
 })
 
-export default function PropertySection({ properties = [], onChange }) {
+export default function PropertySection({ properties = [], onChange, stopwordPresetNames = [] }) {
   // Start with one empty property by default if no properties provided
   const propsList = properties.length > 0 ? properties : [emptyProperty()]
 
@@ -41,7 +41,7 @@ export default function PropertySection({ properties = [], onChange }) {
     <div className="card property-section">
       <div className="section-body">
         {propsList.map((p, i) => (
-          <PropertyItem key={i} index={i} value={p} onChange={(v) => updateAt(i, v)} onDelete={() => deleteAt(i)} />
+          <PropertyItem key={i} index={i} value={p} onChange={(v) => updateAt(i, v)} onDelete={() => deleteAt(i)} stopwordPresetNames={stopwordPresetNames} />
         ))}
       </div>
       <div className="section-footer">

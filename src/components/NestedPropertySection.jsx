@@ -12,7 +12,7 @@ const emptyNestedProperty = () => ({
   tokenization: 'word'
 })
 
-export default function NestedPropertySection({ nestedProperties = [], onChange, depth = 1 }) {
+export default function NestedPropertySection({ nestedProperties = [], onChange, depth = 1, stopwordPresetNames = [] }) {
   const propsList = nestedProperties.length > 0 ? nestedProperties : []
 
   function updateAt(i, next) {
@@ -55,6 +55,7 @@ export default function NestedPropertySection({ nestedProperties = [], onChange,
             onDelete={() => deleteAt(i)}
             isNested={true}
             depth={depth}
+            stopwordPresetNames={stopwordPresetNames}
           />
         ))}
       </div>

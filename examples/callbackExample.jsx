@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 export default function CallbackExample() {
   const [currentSchema, setCurrentSchema] = useState(null);

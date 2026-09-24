@@ -8,7 +8,7 @@
 // - onSubmit: optional callback (schema: object) => void called when submit button is clicked
 //
 // Example usage with callbacks:
-// import Collection from 'weaviate-add-collection';
+// import Collection from '@weaviate/add-collection';
 // 
 // function App() {
 //   const handleChange = (schema) => console.log('Schema:', schema);

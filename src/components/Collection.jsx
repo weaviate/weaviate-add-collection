@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { VersionProvider, VersionGatedSection } from '../context/VersionContext'
 import DOC_LINKS from '../constants/docLinks.json'
 import PropertySection from './PropertySection'
@@ -7,10 +7,49 @@ import InvertedIndexConfigSection from './InvertedIndexConfigSection'
 import MultiTenancyConfigSection from './MultiTenancyConfigSection'
 import ObjectTtlConfigSection from './ObjectTtlConfigSection'
 import ReplicationConfigSection from './ReplicationConfigSection'
+import ShardingConfigSection from './ShardingConfigSection'
 import GenerativeConfigSection from './GenerativeConfigSection'
 import RerankerConfigSection from './RerankerConfigSection'
 import { validateCollectionName, sanitizeCollectionName } from '../utils/collectionNameValidator'
 import { DEFAULT_REPLICATION_ASYNC_CONFIG } from '../constants/replicationDefaults'
+import { DEFAULT_INVERTED_INDEX_CONFIG, createDefaultInvertedIndexConfig, buildStopwordPresets } from '../constants/invertedIndexDefaults'
+import { createDefaultShardingConfig, SHARDING_READ_ONLY_KEYS } from '../constants/shardingDefaults'
+
+/**
+ * Build the wire form of vectorIndexConfig.multivector, or undefined when it
+ * should be omitted entirely.
+ *
+ * The shape is the server's own -- nested `enabled` flags rather than the
+ * ergonomic `encoding: { type: 'muvera' }` union the TypeScript client exposes,
+ * because this project emits raw REST schema JSON. Verified against a live
+ * Weaviate instance.
+ *
+ * Numbers use the Number.isFinite + Number.isInteger guard rather than
+ * parseInt, so a partially typed "1.5" or "abc" is dropped instead of being
+ * emitted as a truncated value or as null.
+ */
+function buildMultivectorConfig(raw) {
+  if (!raw || typeof raw !== 'object' || raw.enabled !== true) return undefined
+
+  const multivector = { enabled: true }
+
+  const aggregation = (raw.aggregation || '').trim()
+  if (aggregation) multivector.aggregation = aggregation
+
+  if (raw.muvera && raw.muvera.enabled === true) {
+    const muvera = { enabled: true }
+    for (const key of ['ksim', 'dprojections', 'repetitions']) {
+      const num = Number(raw.muvera[key])
+      if (raw.muvera[key] !== '' && raw.muvera[key] !== undefined && raw.muvera[key] !== null
+          && Number.isFinite(num) && Number.isInteger(num)) {
+        muvera[key] = num
+      }
+    }
+    multivector.muvera = muvera
+  }
+
+  return multivector
+}
 
 // Contract:
 // Inputs: optional `initialJson` object with { name, description }
@@ -38,17 +77,17 @@ export default function Collection({
   )
   const [nameValidation, setNameValidation] = useState({ valid: true, error: null, warning: null })
   const [generatedJson, setGeneratedJson] = useState({})
-  const [invertedIndexConfig, setInvertedIndexConfig] = useState({
-    bm25_b: 0.75,
-    bm25_k1: 1.2,
-    cleanup_interval_seconds: 60,
-    index_timestamps: false,
-    index_property_length: false,
-    index_null_state: false,
-    stopwords_preset: 'en',
-    stopwords_additions: [],
-    stopwords_removals: [],
-  })
+  const [invertedIndexConfig, setInvertedIndexConfig] = useState(createDefaultInvertedIndexConfig)
+  // Named presets defined under Inverted Index Configuration, offered to each
+  // text property's Text Analyzer. Derived through the same builder the
+  // serializer uses, so a half-finished row (named but wordless) is never
+  // offered as an option -- selecting one would produce a property pointing at
+  // a preset that is not in the emitted schema. Object keys are unique, so
+  // duplicate rows collapse rather than repeating in the <select>.
+  const stopwordPresetNames = useMemo(
+    () => Object.keys(buildStopwordPresets(invertedIndexConfig.stopwords_presets)),
+    [invertedIndexConfig.stopwords_presets]
+  )
   const [multiTenancyConfig, setMultiTenancyConfig] = useState({
     enabled: false,
     autoTenantCreation: false,
@@ -60,6 +99,7 @@ export default function Collection({
     deletionStrategy: 'NoAutomatedResolution',
     asyncConfig: { ...DEFAULT_REPLICATION_ASYNC_CONFIG },
   })
+  const [shardingConfig, setShardingConfig] = useState(createDefaultShardingConfig)
   const [generativeConfig, setGenerativeConfig] = useState({
     enabled: false,
     module: '',
@@ -78,6 +118,7 @@ export default function Collection({
   const [objectTtlConfig, setObjectTtlConfig] = useState({ mode: 'none', timeToLive: '', filterExpiredObjects: false, propertyName: '' })
   const [openObjectTtlConfig, setOpenObjectTtlConfig] = useState(false)
   const [openReplicationConfig, setOpenReplicationConfig] = useState(false)
+  const [openShardingConfig, setOpenShardingConfig] = useState(false)
   const [openGenerativeConfig, setOpenGenerativeConfig] = useState(false)
   const [openRerankerConfig, setOpenRerankerConfig] = useState(false)
 
@@ -156,7 +197,16 @@ export default function Collection({
         indexSearchable: p.indexSearchable ?? true,
         isArray: isArrayType,
         tokenization: p.tokenization || 'word',
-        ...(vectorizePropertyName === true ? { vectorizePropertyName: true } : {})
+        ...(vectorizePropertyName === true ? { vectorizePropertyName: true } : {}),
+        ...(p.textAnalyzer && typeof p.textAnalyzer === 'object'
+          ? {
+              textAnalyzer: {
+                asciiFold: p.textAnalyzer.asciiFold ?? false,
+                asciiFoldIgnore: Array.isArray(p.textAnalyzer.asciiFoldIgnore) ? p.textAnalyzer.asciiFoldIgnore : [],
+                stopwordPreset: p.textAnalyzer.stopwordPreset ?? '',
+              }
+            }
+          : {})
       }
 
       // Process nested properties recursively for object type
@@ -175,16 +225,24 @@ export default function Collection({
     // Load invertedIndexConfig from imported JSON if present
     if (initialJson?.invertedIndexConfig && typeof initialJson.invertedIndexConfig === 'object') {
       const cfg = initialJson.invertedIndexConfig
+      const d = DEFAULT_INVERTED_INDEX_CONFIG
       setInvertedIndexConfig({
-        bm25_b: cfg.bm25?.b ?? 0.75,
-        bm25_k1: cfg.bm25?.k1 ?? 1.2,
-        cleanup_interval_seconds: cfg.cleanupIntervalSeconds ?? 60,
-        index_null_state: cfg.indexNullState ?? false,
-        index_property_length: cfg.indexPropertyLength ?? false,
-        index_timestamps: cfg.indexTimestamps ?? false,
-        stopwords_preset: cfg.stopwords?.preset ?? 'en',
+        bm25_b: cfg.bm25?.b ?? d.bm25_b,
+        bm25_k1: cfg.bm25?.k1 ?? d.bm25_k1,
+        cleanup_interval_seconds: cfg.cleanupIntervalSeconds ?? d.cleanup_interval_seconds,
+        index_null_state: cfg.indexNullState ?? d.index_null_state,
+        index_property_length: cfg.indexPropertyLength ?? d.index_property_length,
+        index_timestamps: cfg.indexTimestamps ?? d.index_timestamps,
+        using_block_max_wand: typeof cfg.usingBlockMaxWAND === 'boolean' ? cfg.usingBlockMaxWAND : null,
+        stopwords_preset: cfg.stopwords?.preset ?? d.stopwords_preset,
         stopwords_additions: cfg.stopwords?.additions ?? [],
         stopwords_removals: cfg.stopwords?.removals ?? [],
+        stopwords_presets: cfg.stopwordPresets && typeof cfg.stopwordPresets === 'object'
+          ? Object.entries(cfg.stopwordPresets).map(([name, words]) => ({
+              name,
+              words: Array.isArray(words) ? words : [],
+            }))
+          : [],
       })
     }
     // Load multiTenancyConfig from imported JSON if present
@@ -222,6 +280,15 @@ export default function Collection({
         deletionStrategy: cfg.deletionStrategy ?? 'NoAutomatedResolution',
         asyncConfig,
       })
+    }
+    // Load shardingConfig from imported JSON if present. Only the three
+    // create-time knobs are kept; the server also returns actualCount,
+    // actualVirtualCount, key, strategy and function, which are read-only.
+    if (initialJson?.shardingConfig && typeof initialJson.shardingConfig === 'object') {
+      const cfg = initialJson.shardingConfig
+      setShardingConfig(Object.fromEntries(
+        Object.keys(createDefaultShardingConfig()).map(key => [key, cfg[key] != null ? cfg[key] : ''])
+      ))
     }
     // Load generativeConfig from imported JSON if present
     // Support both moduleConfig.generative-* (current) and legacy top-level generative key
@@ -558,17 +625,7 @@ export default function Collection({
 
   // Update JSON with inverted index configuration, only including non-default values
   useEffect(() => {
-    const defaults = {
-      bm25_b: 0.75,
-      bm25_k1: 1.2,
-      cleanup_interval_seconds: 60,
-      index_timestamps: false,
-      index_property_length: false,
-      index_null_state: false,
-      stopwords_preset: 'en',
-      stopwords_additions: [],
-      stopwords_removals: [],
-    };
+    const defaults = DEFAULT_INVERTED_INDEX_CONFIG;
 
     const bm25 = {};
     if (invertedIndexConfig.bm25_b !== defaults.bm25_b) bm25.b = invertedIndexConfig.bm25_b;
@@ -585,7 +642,18 @@ export default function Collection({
     if (invertedIndexConfig.index_null_state !== defaults.index_null_state) invertedIndexJson.indexNullState = invertedIndexConfig.index_null_state;
     if (invertedIndexConfig.index_property_length !== defaults.index_property_length) invertedIndexJson.indexPropertyLength = invertedIndexConfig.index_property_length;
     if (invertedIndexConfig.index_timestamps !== defaults.index_timestamps) invertedIndexJson.indexTimestamps = invertedIndexConfig.index_timestamps;
+    // Note the wire key capitalises WAND. Emitted only when explicitly chosen,
+    // since null means "let the server decide" -- and false is a real choice
+    // here, not a default, so it must be emitted.
+    if (typeof invertedIndexConfig.using_block_max_wand === 'boolean') {
+      invertedIndexJson.usingBlockMaxWAND = invertedIndexConfig.using_block_max_wand;
+    }
     if (Object.keys(stopwords).length > 0) invertedIndexJson.stopwords = stopwords;
+
+    // User-defined stopword presets (Weaviate >= 1.37.2), converted from the
+    // UI's ordered rows and with half-finished rows dropped.
+    const stopwordPresets = buildStopwordPresets(invertedIndexConfig.stopwords_presets);
+    if (Object.keys(stopwordPresets).length > 0) invertedIndexJson.stopwordPresets = stopwordPresets;
 
     setGeneratedJson((prev) => {
       // Remove invertedIndexConfig if nothing is set
@@ -711,6 +779,32 @@ export default function Collection({
       return { ...prev, replicationConfig: replicationJson };
     });
   }, [replicationConfig]);
+
+  // Update JSON with sharding configuration
+  useEffect(() => {
+    const toFiniteInt = (value) => {
+      const num = Number(value);
+      return Number.isFinite(num) && Number.isInteger(num) ? num : undefined;
+    };
+
+    const shardingJson = {};
+    Object.entries(shardingConfig).forEach(([key, value]) => {
+      // Read-only server fields are never emitted, even if an imported schema
+      // carried them.
+      if (SHARDING_READ_ONLY_KEYS.includes(key)) return;
+      if (value === '' || value === null || value === undefined) return;
+      const num = toFiniteInt(value);
+      if (num !== undefined) shardingJson[key] = num;
+    });
+
+    setGeneratedJson((prev) => {
+      if (Object.keys(shardingJson).length === 0) {
+        const { shardingConfig: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, shardingConfig: shardingJson };
+    });
+  }, [shardingConfig]);
 
   // Update JSON with generative configuration
   useEffect(() => {
@@ -869,6 +963,34 @@ export default function Collection({
         result.indexSearchable = p.indexSearchable ?? true
         // Always include tokenization for text type
         result.tokenization = p.tokenization || 'word'
+
+        // textAnalyzer (Weaviate >= 1.37.2). Emitted in the flat wire shape,
+        // and only for the parts that differ from the server defaults:
+        //   - asciiFold: false is the default, so never emit it
+        //   - asciiFoldIgnore is meaningless without asciiFold: true
+        //   - stopwordPreset is only honoured for 'word' tokenization
+        //
+        // A preset name is emitted as configured, even if no matching preset is
+        // defined on the collection. The picker only offers presets that will
+        // be emitted, so this happens only for an imported schema that was
+        // already inconsistent, or for a preset emptied after it was picked --
+        // and in both cases surfacing what the user set (and letting the server
+        // reject it) beats silently dropping it from their schema.
+        const textAnalyzer = {}
+        if (p.textAnalyzer?.asciiFold === true) {
+          textAnalyzer.asciiFold = true
+          const ignore = p.textAnalyzer.asciiFoldIgnore
+          if (Array.isArray(ignore) && ignore.length > 0) {
+            textAnalyzer.asciiFoldIgnore = ignore
+          }
+        }
+        const stopwordPreset = (p.textAnalyzer?.stopwordPreset || '').trim()
+        if (stopwordPreset && result.tokenization === 'word') {
+          textAnalyzer.stopwordPreset = stopwordPreset
+        }
+        if (Object.keys(textAnalyzer).length > 0) {
+          result.textAnalyzer = textAnalyzer
+        }
       } else {
         // If not text type, set indexSearchable to false
         result.indexSearchable = false
@@ -1007,6 +1129,10 @@ export default function Collection({
                 if (key === 'skip' && value === false) return
                 // Skip quantizer field itself, we'll handle it separately
                 if (key === 'quantizer') return
+                // A dynamic index starts flat and switches to HNSW, so it
+                // cannot carry multi-vector config -- the client's serializer
+                // returns before its multivector block for dynamic too.
+                if (key === 'multivector') return
                 hnswConfig[key] = value
               }
             })
@@ -1099,7 +1225,16 @@ export default function Collection({
             if (outKey === 'hnsw' || outKey === 'flat') return
             // Skip quantizer field if present (it's just for UI state)
             if (outKey === 'quantizer') return
-            
+
+            // multivector is HNSW-only -- the server has no such setting on a
+            // flat index, and this branch serves both types.
+            if (outKey === 'multivector') {
+              if (config.indexType !== 'hnsw') return
+              const multivector = buildMultivectorConfig(value)
+              if (multivector) indexConfig.multivector = multivector
+              return
+            }
+
             // Handle quantizer configs (pq, bq, sq, rq) - include them as-is
             if (outKey === 'pq' || outKey === 'bq' || outKey === 'sq' || outKey === 'rq') {
               if (typeof value === 'object' && value !== null) {
@@ -1285,7 +1420,11 @@ export default function Collection({
 
         {openProperties && (
           <div className="collapsible-panel">
-            <PropertySection properties={properties} onChange={setProperties} />
+            <PropertySection
+              properties={properties}
+              onChange={setProperties}
+              stopwordPresetNames={stopwordPresetNames}
+            />
           </div>
         )}
       </div>
@@ -1471,6 +1610,38 @@ export default function Collection({
         {nodesNumber === 1 && (
           <div className="collapsible-panel" style={{ padding: 'var(--spacing-md)', color: 'var(--color-text-secondary)' }}>
             <p>Replication feature requires 2 or more nodes.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Sharding Config collapsible section */}
+      <div className="collapsible">
+        <div className="collapsible-header">
+          <button
+            className="collapsible-toggle"
+            aria-expanded={openShardingConfig}
+            onClick={() => setOpenShardingConfig((s) => !s)}
+          >
+            <span>Sharding Configuration</span>
+            <span className="chev">{openShardingConfig ? '▾' : '▸'}</span>
+          </button>
+          {DOC_LINKS.sharding && (
+            <a href={DOC_LINKS.sharding} target="_blank" rel="noopener noreferrer" className="doc-link" title="View documentation">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="View documentation">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+            </a>
+          )}
+        </div>
+
+        {openShardingConfig && (
+          <div className="collapsible-panel">
+            <ShardingConfigSection
+              config={shardingConfig}
+              setConfig={setShardingConfig}
+              replicationFactor={replicationConfig.factor}
+            />
           </div>
         )}
       </div>

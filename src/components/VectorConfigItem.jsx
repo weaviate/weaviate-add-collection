@@ -64,6 +64,20 @@ export default function VectorConfigItem({
     update('moduleConfig', moduleConfig)
   }
 
+  // State is held in the server's wire shape (nested `enabled` flags) so that
+  // import needs no translation -- the HNSW import paths spread indexConfig
+  // wholesale and the serializer passes unknown keys through.
+  function updateMultivector(field, val) {
+    const multivector = { ...(value.indexConfig?.multivector || {}), [field]: val }
+    update('indexConfig', { ...value.indexConfig, multivector })
+  }
+
+  function updateMuvera(field, val) {
+    const multivector = value.indexConfig?.multivector || {}
+    const muvera = { ...(multivector.muvera || {}), [field]: val }
+    update('indexConfig', { ...value.indexConfig, multivector: { ...multivector, muvera } })
+  }
+
   // Handle property selection for vectorization
   function handlePropertyToggle(propertyName) {
     const currentProperties = value.moduleConfig?.properties || []
@@ -506,6 +520,104 @@ export default function VectorConfigItem({
                       </label>
                       <small className="hint">Skip building the HNSW index (default: false)</small>
                     </div>
+
+                    <VersionGated featureId="multiVectorHnsw">
+                      <div className="nested-section">
+                        <div className="nested-section-title">Multi-Vector (ColBERT)</div>
+                        <div className="field">
+                          <label htmlFor={`hnsw-multivector-enabled-${index}`}>
+                            <input
+                              id={`hnsw-multivector-enabled-${index}`}
+                              type="checkbox"
+                              checked={value.indexConfig?.multivector?.enabled || false}
+                              onChange={(e) => updateMultivector('enabled', e.target.checked)}
+                              style={{ width: 'auto', marginRight: '8px' }}
+                            />
+                            Enable Multi-Vector
+                          </label>
+                          <small className="hint">
+                            Stores several vectors per object instead of one. Required by the
+                            ColBERT-style modules (text2multivec-*, multi2multivec-*).
+                          </small>
+                        </div>
+
+                        {value.indexConfig?.multivector?.enabled && (
+                          <>
+                            <div className="field">
+                              <label htmlFor={`hnsw-multivector-aggregation-${index}`}>Aggregation</label>
+                              <select
+                                id={`hnsw-multivector-aggregation-${index}`}
+                                value={value.indexConfig?.multivector?.aggregation || 'maxSim'}
+                                onChange={(e) => updateMultivector('aggregation', e.target.value)}
+                              >
+                                <option value="maxSim">maxSim</option>
+                              </select>
+                              <small className="hint">How the per-vector scores are combined (default: maxSim)</small>
+                            </div>
+
+                            <VersionGated featureId="muveraEncoding">
+                              <div className="nested-section">
+                                <div className="nested-section-title">MUVERA Encoding</div>
+                                <div className="field">
+                                  <label htmlFor={`hnsw-muvera-enabled-${index}`}>
+                                    <input
+                                      id={`hnsw-muvera-enabled-${index}`}
+                                      type="checkbox"
+                                      checked={value.indexConfig?.multivector?.muvera?.enabled || false}
+                                      onChange={(e) => updateMuvera('enabled', e.target.checked)}
+                                      style={{ width: 'auto', marginRight: '8px' }}
+                                    />
+                                    Enable MUVERA
+                                  </label>
+                                  <small className="hint">
+                                    Compresses multi-vector embeddings into a single fixed-size
+                                    vector, trading some recall for much lower memory use.
+                                  </small>
+                                </div>
+
+                                {value.indexConfig?.multivector?.muvera?.enabled && (
+                                  <>
+                                    <div className="field">
+                                      <label htmlFor={`hnsw-muvera-ksim-${index}`}>KSim</label>
+                                      <input
+                                        id={`hnsw-muvera-ksim-${index}`}
+                                        type="number"
+                                        step="1"
+                                        value={value.indexConfig?.multivector?.muvera?.ksim ?? ''}
+                                        onChange={(e) => updateMuvera('ksim', e.target.value)}
+                                      />
+                                      <small className="hint">Number of SimHash projections (default: 4)</small>
+                                    </div>
+                                    <div className="field">
+                                      <label htmlFor={`hnsw-muvera-dprojections-${index}`}>DProjections</label>
+                                      <input
+                                        id={`hnsw-muvera-dprojections-${index}`}
+                                        type="number"
+                                        step="1"
+                                        value={value.indexConfig?.multivector?.muvera?.dprojections ?? ''}
+                                        onChange={(e) => updateMuvera('dprojections', e.target.value)}
+                                      />
+                                      <small className="hint">Dimensionality of each projection (default: 16)</small>
+                                    </div>
+                                    <div className="field">
+                                      <label htmlFor={`hnsw-muvera-repetitions-${index}`}>Repetitions</label>
+                                      <input
+                                        id={`hnsw-muvera-repetitions-${index}`}
+                                        type="number"
+                                        step="1"
+                                        value={value.indexConfig?.multivector?.muvera?.repetitions ?? ''}
+                                        onChange={(e) => updateMuvera('repetitions', e.target.value)}
+                                      />
+                                      <small className="hint">Number of encoding repetitions (default: 10)</small>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </VersionGated>
+                          </>
+                        )}
+                      </div>
+                    </VersionGated>
                   </div>
                 )}
 

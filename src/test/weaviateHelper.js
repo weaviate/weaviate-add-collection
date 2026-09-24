@@ -220,3 +220,53 @@ export async function exportCollectionSchema(client, collectionName) {
   
   return schema
 }
+
+// ─── Raw REST schema helpers ──────────────────────────────────────────────────
+
+const WEAVIATE_REST = 'http://localhost:8080/v1/schema'
+
+/**
+ * POST a schema to Weaviate exactly as the component emitted it.
+ *
+ * The typed `createCollection` above rebuilds a CollectionConfigCreate by hand
+ * and silently drops anything it does not know about, and the client's read
+ * path rewrites some fields on the way back (asciiFold/asciiFoldIgnore become
+ * an ergonomic union, and NestedPropertyCreate has no textAnalyzer at all).
+ * That makes it the wrong tool for checking what this component produces --
+ * it would test the helper, not the schema. These two send and read the raw
+ * REST payload instead.
+ */
+export async function postRawSchema(collectionJson) {
+  const response = await fetch(WEAVIATE_REST, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(collectionJson),
+  })
+  if (!response.ok) {
+    throw new Error(`Weaviate rejected the schema (${response.status}): ${await response.text()}`)
+  }
+  return response.json()
+}
+
+/** GET a collection's schema as raw JSON. */
+export async function getRawSchema(collectionName) {
+  const response = await fetch(`${WEAVIATE_REST}/${collectionName}`)
+  if (!response.ok) {
+    throw new Error(`Could not read schema for ${collectionName} (${response.status})`)
+  }
+  return response.json()
+}
+
+/**
+ * Delete a collection, ignoring "not found" so it is safe in cleanup.
+ *
+ * Only 404 is swallowed. A 500 or a connection failure means the collection is
+ * probably still there, and silently ignoring it leaves a stale schema that
+ * makes the next run of the same test fail for an unrelated reason.
+ */
+export async function deleteRawSchema(collectionName) {
+  const response = await fetch(`${WEAVIATE_REST}/${collectionName}`, { method: 'DELETE' })
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`Could not delete ${collectionName} (${response.status}): ${await response.text()}`)
+  }
+}

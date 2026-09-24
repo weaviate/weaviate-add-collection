@@ -16,8 +16,14 @@ Before running the tests, you need to have:
      --name weaviate \
      -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
      -e PERSISTENCE_DATA_PATH=/var/lib/weaviate \
-     semitechnologies/weaviate:latest
+     -e DEFAULT_VECTORIZER_MODULE=none \
+     -e CLUSTER_HOSTNAME=node1 \
+     cr.weaviate.io/semitechnologies/weaviate:1.37.3
    ```
+
+   CI pins `1.37.3`. Some tests need at least `1.37.2` (the v1.37 tokenization
+   config), so pin the tag rather than using `latest` if you want the local run
+   to match CI.
 
 ## Running Tests
 
@@ -71,6 +77,18 @@ The `src/test/weaviateHelper.js` file provides helper functions for:
 - Deleting collections (`deleteCollection`)
 - Exporting collection schemas (`exportCollectionSchema`)
 - Getting collections (`getCollection`)
+
+It also provides raw REST helpers — `postRawSchema`, `getRawSchema` and
+`deleteRawSchema`. Prefer these when the point of the test is that *the JSON
+this component generates* is valid. `createCollection` rebuilds a typed
+`CollectionConfigCreate` by hand and drops anything it does not model, and the
+client's read path rewrites some fields on the way back, so a round-trip
+through it tests the helper rather than the generated schema.
+
+### `Collection.tokenizationLive.test.jsx`
+Posts the component's generated JSON verbatim to `/v1/schema` and reads it back,
+checking that `textAnalyzer` and `invertedIndexConfig.stopwordPresets` survive
+unchanged. Needs Weaviate >= 1.37.2.
 
 ## Troubleshooting
 

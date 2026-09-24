@@ -10,7 +10,101 @@ import {
   hasGenerativeConfigOptions,
   getRerankerConfigFields,
   hasRerankerConfigOptions,
+  getAllModuleConfigs,
 } from '../utils/moduleConfigExtractor'
+import { getVectorizerModuleOptions } from '../constants/options'
+
+// ─── Dropdown/field-table parity ──────────────────────────────────────────────
+
+/**
+ * Module support lives in two hand-maintained files that have to agree:
+ * VECTORIZER_CONFIG_FIELDS in moduleConfigExtractor.js says what a module can
+ * be configured with, and allAvailableModules in constants/options.js decides
+ * whether it can be picked at all. They had drifted badly enough that 17
+ * modules with complete field definitions were unreachable from the UI, which
+ * is invisible from either file alone.
+ */
+describe('vectorizer dropdown ↔ field-table parity', () => {
+  // qna-openai is a question-answering module, not a vectorizer. It predates
+  // this test and is surfaced by getVectorizerModuleOptions only because the
+  // filter there excludes backup-/generative-/reranker- prefixes and nothing
+  // else. Tracked separately; excluded here so the parity check stays honest
+  // about everything else.
+  const KNOWN_NON_VECTORIZERS = new Set(['qna-openai'])
+
+  it('every module with field definitions is selectable in the dropdown', () => {
+    const selectable = new Set(getVectorizerModuleOptions().map(o => o.value))
+    const unreachable = Object.keys(getAllModuleConfigs()).filter(m => !selectable.has(m))
+
+    expect(unreachable).toEqual([])
+  })
+
+  it('every selectable vectorizer has field definitions', () => {
+    const defined = new Set(Object.keys(getAllModuleConfigs()))
+    const undefinedFields = getVectorizerModuleOptions()
+      .map(o => o.value)
+      .filter(m => !defined.has(m) && !KNOWN_NON_VECTORIZERS.has(m))
+
+    expect(undefinedFields).toEqual([])
+  })
+})
+
+// ─── Modules present in the client union but missing from both repo files ─────
+
+describe('multi2multivec-weaviate (Multi2MultivecWeaviateConfig)', () => {
+  it('exposes baseURL, model and imageFields', () => {
+    const byName = Object.fromEntries(
+      getModuleConfigFields('multi2multivec-weaviate').map(f => [f.name, f])
+    )
+
+    expect(byName.baseURL?.type).toBe('string')
+    expect(byName.model?.type).toBe('string')
+    expect(byName.imageFields?.type).toBe('string[]')
+  })
+
+  it('does not declare textFields — this module vectorizes images only', () => {
+    const names = getModuleConfigFields('multi2multivec-weaviate').map(f => f.name)
+    expect(names).not.toContain('textFields')
+  })
+})
+
+describe('text2vec-google-gemini (Text2VecGoogleGeminiConfig)', () => {
+  it('exposes model and titleProperty', () => {
+    const byName = Object.fromEntries(
+      getModuleConfigFields('text2vec-google-gemini').map(f => [f.name, f])
+    )
+
+    expect(byName.model?.type).toBe('string')
+    expect(byName.titleProperty?.type).toBe('string')
+  })
+
+  it('matches the deprecated text2vec-google-ai-studio it replaces', () => {
+    const gemini = getModuleConfigFields('text2vec-google-gemini').map(f => f.name).sort()
+    const aiStudio = getModuleConfigFields('text2vec-google-ai-studio').map(f => f.name).sort()
+
+    expect(gemini).toEqual(aiStudio)
+  })
+})
+
+describe('multi2vec-google-gemini (Multi2VecGoogleGeminiConfig)', () => {
+  // The client types this as Omit<Multi2VecGoogleConfig, 'location' | 'projectId' | 'apiEndpoint'>.
+  it('drops the GCP-only fields from multi2vec-google', () => {
+    const names = getModuleConfigFields('multi2vec-google-gemini').map(f => f.name)
+
+    expect(names).not.toContain('location')
+    expect(names).not.toContain('projectId')
+    expect(names).not.toContain('apiEndpoint')
+  })
+
+  it('keeps every other multi2vec-google field', () => {
+    const gemini = new Set(getModuleConfigFields('multi2vec-google-gemini').map(f => f.name))
+    const inherited = getModuleConfigFields('multi2vec-google')
+      .map(f => f.name)
+      .filter(n => !['location', 'projectId', 'apiEndpoint'].includes(n))
+
+    expect(inherited.filter(n => !gemini.has(n))).toEqual([])
+  })
+})
 
 // ─── v3.12.0 PR #398: baseURL on reranker-cohere ──────────────────────────────
 

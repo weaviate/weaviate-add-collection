@@ -1,5 +1,7 @@
 # Weaviate Add Collection (minimal)
 
+**[Live demo → weaviate.github.io/weaviate-add-collection](https://weaviate.github.io/weaviate-add-collection/)**
+
 A minimal React app (Vite) with a Collection component to compose a Weaviate collection JSON.
 
 [This project is used in Weaviate Studio](https://github.com/muleyprasad/weaviate-studio/)
@@ -20,21 +22,31 @@ npm run dev
 
 ## Using as a Package
 
+```bash
+npm install @weaviate/add-collection
+```
+
+`react` and `react-dom` (18 or 19) are peer dependencies. The package ships prebuilt ESM and CommonJS bundles in `lib/`; styles are imported separately:
+
+```javascript
+import '@weaviate/add-collection/styles.css';
+```
+
 You can import the `Collection` component into your own React application:
 
 ```javascript
 // Default import
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 // Named import
-import { Collection } from 'weaviate-add-collection';
+import { Collection } from '@weaviate/add-collection';
 ```
 
 ### Example Usage
 
 ```jsx
 import React from 'react';
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 function App() {
   return (
@@ -68,7 +80,7 @@ Instead of scraping the DOM to get the generated schema, you can use the callbac
 
 ```jsx
 import React from 'react';
-import Collection from 'weaviate-add-collection';
+import Collection from '@weaviate/add-collection';
 
 function App() {
   const handleSchemaChange = (schema) => {
@@ -135,18 +147,32 @@ All version gates are centralised in [`src/constants/versionFeatures.js`](src/co
 
 ```js
 // src/constants/versionFeatures.js
-export const versionFeatures = {
+export const VERSION_FEATURES = {
   dynamicIndexType: '1.25.0',
-  rerankerSection:  '1.26.0',
+  textAnalyzer:     '1.37.2',
   // ...
 }
 ```
 
 To add a new gate, add an entry there and use one of the gating helpers from [`src/context/VersionContext.jsx`](src/context/VersionContext.jsx):
 
-- **`<VersionGated featureId="…">`** — wraps any JSX; renders nothing when unavailable.
-- **`<VersionGatedSection featureId="…" title="…">`** — wraps a collapsible section; disables the toggle when unavailable.
-- **`useVersionFilteredOptions(opts)`** — filters/disables option arrays for `<select>` elements.
+- **`<VersionGated featureId="…">`** — wraps any JSX; greys it out behind a click-capture overlay and shows a `data-version-tooltip` when unavailable. The content stays in the DOM.
+- **`<VersionGatedSection featureId="…" title="…">`** — wraps a collapsible section; disables the toggle when unavailable and does not render the panel.
+- **`useVersionFilteredOptions(opts)`** — keeps options but marks them `disabled` and appends "— Requires Weaviate ≥ X.Y.Z" to the label.
+
+**Establish the minimum version from Weaviate core, not from a client release.**
+A feature usually appears in the TypeScript client some releases after the
+server gained it, and occasionally before the server ships it at all. Both
+directions cause real bugs: gating too late greys out a working control, and
+gating too early offers a control the server will reject. Find the commit that
+introduced the field in `weaviate/weaviate`, then check which tag first
+contains it:
+
+```bash
+gh api "repos/weaviate/weaviate/compare/<sha>...v1.34.0" --jq '.status'
+# "ahead"  -> that tag contains the commit
+# "behind" -> it does not
+```
 
 See `CLAUDE.md` for step-by-step instructions on adding new version-gated fields, options, and sections.
 
@@ -183,9 +209,39 @@ The following fields are shown conditionally based on the selected data type:
 
 #### **Tokenization**
 - **Visible only for:** `text` data type
-- **Options:** word, whitespace, lowercase, field, gse, trigram, kagome_ja, kagome_kr
+- **Options:** word, whitespace, lowercase, field, gse, gse_ch, trigram, kagome_ja, kagome_kr
 - **Default:** word
 - **Purpose:** Defines how text is tokenized for search indexing
+- **Note:** `gse`, `gse_ch`, `kagome_ja` and `kagome_kr` each need their own
+  `ENABLE_TOKENIZER_*` environment variable set on the server, otherwise
+  Weaviate rejects the property at creation time
+
+#### **Text Analyzer**
+- **Visible only for:** `text` data type
+- **Requires:** Weaviate 1.37.2+
+- **Purpose:** Per-property accent folding and stopword selection
+- **Fields:**
+  - **ASCII Fold** — folds accents to base characters, so "école" matches
+    "ecole". Immutable after the property is created.
+  - **ASCII Fold Ignore** — characters to leave unfolded. Editable later, but
+    only affects data indexed after the change.
+  - **Stopword Preset** — overrides the collection-level stopwords for this
+    property. Offers the built-in `en` and `none` plus any preset defined under
+    Inverted Index Configuration. Only applies to `word` tokenization, so the
+    field is hidden for every other method.
+- **Example Output:**
+  ```json
+  {
+    "name": "title",
+    "dataType": ["text"],
+    "tokenization": "word",
+    "textAnalyzer": {
+      "asciiFold": true,
+      "asciiFoldIgnore": ["é"],
+      "stopwordPreset": "fr"
+    }
+  }
+  ```
 
 #### **Vectorization Settings (per-property)**
 - **Visible only for:** `text` data type
@@ -356,11 +412,11 @@ See [TABS_DOCUMENTATION.md](TABS_DOCUMENTATION.md) for detailed information abou
 
 ### Dynamic Module Configuration
 
-When you select a vectorizer module, the application automatically infers the available configuration options for that module directly from the Weaviate client library. This ensures that the configuration form always matches the actual API requirements.
+When you select a vectorizer module, the application renders a configuration form built from a table of field definitions transcribed from the `weaviate-client` TypeScript types.
 
 #### How It Works
 
-1. **Type Definition Extraction:** The application reads the TypeScript type definitions from `weaviate-client` to understand what configuration fields are available for each module.
+1. **Field Definitions:** `src/utils/moduleConfigExtractor.js` holds a table of the configuration fields for each module, transcribed by hand from the `weaviate-client` type definitions. Despite the file's name nothing is extracted at build or runtime — keeping it current is a manual step on each client bump.
 
 2. **Dynamic Form Generation:** Based on the selected module, a configuration form is automatically generated with the appropriate fields.
 
@@ -491,15 +547,44 @@ The vector configurations are output in the `vectorConfig` object with module-sp
     "factor": 3,
     "asyncEnabled": true,
     "deletionStrategy": "DeleteOnConflict"
+  },
+  "shardingConfig": {
+    "desiredCount": 2,
+    "virtualPerPhysical": 128,
+    "desiredVirtualCount": 256
   }
 }
 ```
+
+## Sharding Configuration
+
+Exposes the three create-time `shardingConfig` fields: `desiredCount`,
+`virtualPerPhysical` and `desiredVirtualCount`.
+
+A schema read back from a running Weaviate also carries `actualCount`,
+`actualVirtualCount`, `key`, `strategy` and `function`. Those are accepted on
+import so a round-tripped schema is not silently altered, but they are never
+emitted — they are outputs, not settings.
+
+Weaviate treats sharding and replication as mutually exclusive. This component
+emits each from its own effect and auto-sets the replication factor from
+`nodesNumber`, so both can end up in one schema; the section shows a warning
+rather than blocking, and the server has the final say.
 
 ## Architecture
 
 ### Module Configuration System
 
-The module configuration system is designed to automatically extract and utilize the type definitions from the `weaviate-client` library, ensuring that the UI always stays in sync with the API.
+The module configuration tables mirror the type definitions in the
+`weaviate-client` library so the UI stays in sync with the API.
+
+> **These tables are maintained by hand.** Nothing reads the `.d.ts` files at
+> build or runtime. When bumping `weaviate-client`, diff the `Vectorizer`,
+> `GenerativeSearch` and `Reranker` unions in
+> `src/collections/config/types/` against `VECTORIZER_CONFIG_FIELDS` and
+> `allAvailableModules`. `moduleConfigExtractor.test.js` asserts that those two
+> repo files agree with each other, but it cannot know about a module neither
+> of them has heard of.
 
 #### Components
 
@@ -558,10 +643,9 @@ The system maps TypeScript types to form inputs:
 #### Benefits
 
 1. **Type Safety:** Configurations match the actual API requirements
-2. **Automatic Updates:** When new modules are added to weaviate-client, they automatically become available
-3. **Self-Documenting:** Field descriptions are embedded in the UI
-4. **Validation:** Required fields are enforced
-5. **Maintainability:** Single source of truth (weaviate-client types)
+2. **Self-Documenting:** Field descriptions are embedded in the UI
+3. **Validation:** Required fields are enforced
+4. **Consistency:** A parity test keeps the field tables and the module dropdown in agreement, so a module can never have configuration options it cannot be selected to use
 
 ### Examples
 

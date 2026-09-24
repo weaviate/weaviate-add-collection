@@ -1,15 +1,22 @@
 /**
- * This utility extracts configuration options for vectorizer modules
- * directly from the Weaviate client TypeScript definitions.
- * 
- * It dynamically infers the available configuration fields for each
- * vectorizer module based on the TypeScript type definitions.
- * 
+ * Configuration options for vectorizer, generative and reranker modules.
+ *
+ * IMPORTANT: these tables are a HAND-MAINTAINED MIRROR of the weaviate-client
+ * TypeScript definitions. Nothing is read from the `.d.ts` files at build or
+ * runtime — the import below is deliberately commented out. When the client
+ * gains a module or a field, someone has to transcribe it here by hand, so the
+ * tables drift silently. `moduleConfigExtractor.test.js` asserts that every
+ * module defined here is reachable from the dropdown in `constants/options.js`,
+ * which catches one half of that drift; the other half (client gains a module
+ * neither file knows about) still needs a manual audit on each client bump.
+ *
+ * Last transcribed against: weaviate-client 3.14.0.
+ *
  * ## How to Discover Properties for Each Vectorizer Module
- * 
+ *
  * To find the available configuration properties for a vectorizer module,
  * inspect the TypeScript definitions from the weaviate-client package:
- * 
+ *
  * ```bash
  * # Navigate to the weaviate-client package
  * cd node_modules/weaviate-client
@@ -125,6 +132,19 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
     ]
   },
+  // Same shape as multi2vec-google minus location/projectId/apiEndpoint: the
+  // Gemini API is keyed rather than tied to a GCP project and region.
+  'multi2vec-google-gemini': {
+    fields: [
+      { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' },
+      { name: 'textFields', type: 'string[]', description: 'The text fields used when vectorizing.' },
+      { name: 'videoFields', type: 'string[]', description: 'The video fields used when vectorizing.' },
+      { name: 'videoIntervalSeconds', type: 'number', description: 'Length of a video interval in seconds.' },
+      { name: 'model', type: 'string', description: 'The model ID in use.' },
+      { name: 'dimensions', type: 'number', description: 'The dimensionality of the vector once embedded.' },
+      { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
+    ]
+  },
   'multi2vec-jinaai': {
     fields: [
       { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },
@@ -213,6 +233,14 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'truncate', type: 'boolean', description: 'Whether to truncate when vectorising.' },
     ]
   },
+  // model is required: the server has no default, and the client's factory
+  // makes opts mandatory for the same reason.
+  'text2vec-digitalocean': {
+    fields: [
+      { name: 'model', type: 'string', required: true, description: 'The model to use (e.g., qwen3-embedding-0.6b).' },
+      { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go. Defaults to https://inference.do-ai.run.' },
+    ]
+  },
   'text2vec-mistral': {
     fields: [
       { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },
@@ -249,7 +277,15 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'titleProperty', type: 'string', description: 'The Weaviate property name to use as the title.' },
     ]
   },
+  // Deprecated in the client in favour of text2vec-google-gemini, which has an
+  // identical shape. Kept so existing schemas still round-trip.
   'text2vec-google-ai-studio': {
+    fields: [
+      { name: 'model', type: 'string', description: 'The model ID to use.' },
+      { name: 'titleProperty', type: 'string', description: 'The Weaviate property name to use as the title.' }
+    ]
+  },
+  'text2vec-google-gemini': {
     fields: [
       { name: 'model', type: 'string', description: 'The model ID to use.' },
       { name: 'titleProperty', type: 'string', description: 'The Weaviate property name to use as the title.' }
@@ -288,6 +324,13 @@ const VECTORIZER_CONFIG_FIELDS = {
     fields: [
       { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' },
       { name: 'textFields', type: 'string[]', description: 'The text fields used when vectorizing.' }
+    ]
+  },
+  'multi2multivec-weaviate': {
+    fields: [
+      { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },
+      { name: 'model', type: 'string', description: 'The model to use (e.g., ModernVBERT/colmodernvbert).' },
+      { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' }
     ]
   },
   'text2vec-morph': {

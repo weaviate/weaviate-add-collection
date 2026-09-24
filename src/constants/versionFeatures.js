@@ -25,8 +25,15 @@ export const VERSION_FEATURES = {
   rqQuantizationHnsw:          '1.35.0',  // RQ for HNSW index
   rqQuantizationFlat:          '1.35.0',  // RQ for Flat index
 
+  // Multi-vector (HNSW only)
+  multiVectorHnsw:             '1.29.0',  // ColBERT-style multi-vector (preview in 1.29)
+  muveraEncoding:              '1.31.0',  // MUVERA encoding for multi-vector
+
   // Property indexing
   indexRangeFilters:           '1.24.0',
+
+  // Inverted index
+  usingBlockMaxWand:           '1.30.0',
 
   // Object TTL
   objectTtl:                   '1.35.0',
@@ -36,8 +43,14 @@ export const VERSION_FEATURES = {
   tokenizationTrigram:         '1.24.0',
   tokenizationKagomeKr:        '1.25.7',
   tokenizationKagomeJa:        '1.28.0',
+  tokenizationGseCh:           '1.34.0',
+
+  // v1.37 tokenization config
+  textAnalyzer:                '1.37.2',
+  stopwordPresets:             '1.37.2',
 
   // Modules
   generativeContextualai:      '1.34.0',
   rerankerContextualai:        '1.34.0',
+  vectorizerDigitalocean:      '1.38.0',
 }
