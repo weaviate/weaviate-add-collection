@@ -10,7 +10,8 @@
  * which catches one half of that drift; the other half (client gains a module
  * neither file knows about) still needs a manual audit on each client bump.
  *
- * Last transcribed against: weaviate-client 3.14.0.
+ * Last transcribed against: weaviate-client 3.15.3, plus HFresh multi-vector
+ * from unreleased client main (#500).
  *
  * ## How to Discover Properties for Each Vectorizer Module
  *
@@ -155,6 +156,15 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
     ]
   },
+  'multi2vec-twelvelabs': {
+    fields: [
+      { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go (server default: https://api.twelvelabs.io/v1.3).' },
+      { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' },
+      { name: 'model', type: 'string', description: 'The TwelveLabs model to use (server default: marengo3.0).' },
+      { name: 'textFields', type: 'string[]', description: 'The text fields used when vectorizing.' },
+      { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
+    ]
+  },
   'multi2vec-voyageai': {
     fields: [
       { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },
@@ -180,6 +190,7 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'service', type: 'string', required: true, description: 'The AWS service to use (bedrock, sagemaker).' },
       { name: 'endpoint', type: 'string', description: 'The endpoint URL. REQUIRED for service sagemaker.' },
       { name: 'model', type: 'string', description: 'The model to use. REQUIRED for service bedrock.' },
+      { name: 'dimensions', type: 'number', description: 'The number of dimensions for the generated embeddings. Only for service bedrock with amazon.* models. Requires Weaviate 1.37.10+ / 1.38.2+.' },
     ]
   },
   'text2vec-azure-openai': {
@@ -271,6 +282,7 @@ const VECTORIZER_CONFIG_FIELDS = {
     fields: [
       { name: 'apiEndpoint', type: 'string', description: 'The API endpoint to use without a leading scheme.' },
       { name: 'dimensions', type: 'number', description: 'The dimensionality of the vector once embedded.' },
+      { name: 'location', type: 'string', description: 'The Vertex AI region where the model runs (server default: us-central1). Must match apiEndpoint. Requires Weaviate 1.37.10+ / 1.38.2+.' },
       { name: 'model', type: 'string', description: 'The model ID to use.' },
       { name: 'modelId', type: 'string', description: 'The model ID to use (deprecated - use model instead).' },
       { name: 'projectId', type: 'string', description: 'The project ID to use.' },
@@ -425,6 +437,18 @@ const GENERATIVE_CONFIG_FIELDS = {
       { name: 'temperature', type: 'number', description: 'Temperature for response generation.' },
       { name: 'topK', type: 'number', description: 'Top-k sampling parameter.' },
       { name: 'topP', type: 'number', description: 'Top-p sampling parameter.' }
+    ]
+  },
+  'generative-digitalocean': {
+    fields: [
+      { name: 'model', type: 'string', description: 'The DigitalOcean Serverless Inference model to use (server default: nemotron-3.5-super-vl).' },
+      { name: 'baseURL', type: 'string', description: 'The base URL for the DigitalOcean API (server default: https://inference.do-ai.run).' },
+      { name: 'maxTokens', type: 'number', description: 'Maximum number of tokens to generate.' },
+      { name: 'temperature', type: 'number', description: 'Temperature for response generation.' },
+      { name: 'topP', type: 'number', description: 'Top-p sampling parameter.' },
+      { name: 'frequencyPenalty', type: 'number', description: 'Penalty for token frequency.' },
+      { name: 'presencePenalty', type: 'number', description: 'Penalty for token presence.' },
+      { name: 'stop', type: 'string[]', description: 'Sequences where generation stops.' }
     ]
   },
   'generative-friendliai': {

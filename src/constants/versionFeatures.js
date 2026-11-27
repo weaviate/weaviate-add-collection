@@ -28,6 +28,7 @@ export const VERSION_FEATURES = {
   // Multi-vector (HNSW only)
   multiVectorHnsw:             '1.29.0',  // ColBERT-style multi-vector (preview in 1.29)
   muveraEncoding:              '1.31.0',  // MUVERA encoding for multi-vector
+  multiVectorHfresh:           '1.40.0',  // MUVERA-only multi-vector on HFresh (vectorizers need 1.40.6 / 1.41.0)
 
   // Property indexing
   indexRangeFilters:           '1.24.0',
@@ -53,4 +54,6 @@ export const VERSION_FEATURES = {
   generativeContextualai:      '1.34.0',
   rerankerContextualai:        '1.34.0',
   vectorizerDigitalocean:      '1.38.0',
+  vectorizerTwelvelabs:        '1.39.0',  // backported to 1.38.9 / 1.37.15; gate follows the first native minor
+  generativeDigitalocean:      '1.39.2',  // backported to 1.38.13 / 1.37.15; gate follows the first native minor
 }

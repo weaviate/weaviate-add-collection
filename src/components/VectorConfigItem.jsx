@@ -78,6 +78,16 @@ export default function VectorConfigItem({
     update('indexConfig', { ...value.indexConfig, multivector: { ...multivector, muvera } })
   }
 
+  // HFresh only stores multi-vectors MUVERA-encoded, so a single toggle drives
+  // both flags: the server rejects multivector.enabled without muvera.enabled.
+  function setHfreshMultivector(enabled) {
+    const multivector = value.indexConfig?.multivector || {}
+    update('indexConfig', {
+      ...value.indexConfig,
+      multivector: { ...multivector, enabled, muvera: { ...(multivector.muvera || {}), enabled } },
+    })
+  }
+
   // Handle property selection for vectorization
   function handlePropertyToggle(propertyName) {
     const currentProperties = value.moduleConfig?.properties || []
@@ -866,12 +876,85 @@ export default function VectorConfigItem({
                       <label>Search Probe</label>
                       <input
                         type="number"
-                        value={value.indexConfig?.searchProbe ?? 64}
-                        onChange={(e) => update('indexConfig', { ...value.indexConfig, searchProbe: parseInt(e.target.value) || 64 })}
-                        placeholder="64"
+                        value={value.indexConfig?.searchProbe ?? ''}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value, 10)
+                          update('indexConfig', { ...value.indexConfig, searchProbe: Number.isNaN(n) ? undefined : n })
+                        }}
+                        placeholder="server default"
+                        min="1"
                       />
-                      <small className="hint">Number of posting lists to search during a query (default: 64)</small>
+                      <small className="hint">Number of posting lists to search during a query. Leave empty for the server default: 256 on Weaviate 1.37.10+, 1.38.2+ and 1.39+; 64 on earlier versions.</small>
                     </div>
+
+                    <VersionGated featureId="multiVectorHfresh">
+                      <div className="nested-section">
+                        <div className="nested-section-title">Multi-Vector (MUVERA)</div>
+                        <div className="field">
+                          <label htmlFor={`hfresh-multivector-enabled-${index}`}>
+                            <input
+                              id={`hfresh-multivector-enabled-${index}`}
+                              type="checkbox"
+                              checked={Boolean(value.indexConfig?.multivector?.enabled || value.indexConfig?.multivector?.muvera?.enabled)}
+                              onChange={(e) => setHfreshMultivector(e.target.checked)}
+                              style={{ width: 'auto', marginRight: '8px' }}
+                            />
+                            Enable Multi-Vector
+                          </label>
+                          <small className="hint">
+                            Stores several vectors per object. HFresh always MUVERA-encodes
+                            them, so MUVERA cannot be turned off here. Multi-vector
+                            vectorizers (text2multivec-*, multi2multivec-*) on HFresh need
+                            Weaviate 1.40.6+ / 1.41.0+; the server enables this for them
+                            automatically.
+                          </small>
+                        </div>
+
+                        {(value.indexConfig?.multivector?.enabled || value.indexConfig?.multivector?.muvera?.enabled) && (
+                          <>
+                            <div className="field">
+                              <label htmlFor={`hfresh-muvera-ksim-${index}`}>KSim</label>
+                              <input
+                                id={`hfresh-muvera-ksim-${index}`}
+                                type="number"
+                                step="1"
+                                min="1"
+                                max="10"
+                                value={value.indexConfig?.multivector?.muvera?.ksim ?? ''}
+                                onChange={(e) => updateMuvera('ksim', e.target.value)}
+                              />
+                              <small className="hint">Number of SimHash projections. Range: 1–10 (default: 4)</small>
+                            </div>
+                            <div className="field">
+                              <label htmlFor={`hfresh-muvera-dprojections-${index}`}>DProjections</label>
+                              <input
+                                id={`hfresh-muvera-dprojections-${index}`}
+                                type="number"
+                                step="1"
+                                min="1"
+                                max="1024"
+                                value={value.indexConfig?.multivector?.muvera?.dprojections ?? ''}
+                                onChange={(e) => updateMuvera('dprojections', e.target.value)}
+                              />
+                              <small className="hint">Dimensionality of each projection. Range: 1–1024 (default: 16)</small>
+                            </div>
+                            <div className="field">
+                              <label htmlFor={`hfresh-muvera-repetitions-${index}`}>Repetitions</label>
+                              <input
+                                id={`hfresh-muvera-repetitions-${index}`}
+                                type="number"
+                                step="1"
+                                min="1"
+                                max="256"
+                                value={value.indexConfig?.multivector?.muvera?.repetitions ?? ''}
+                                onChange={(e) => updateMuvera('repetitions', e.target.value)}
+                              />
+                              <small className="hint">Number of encoding repetitions. Range: 1–256 (default: 10)</small>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </VersionGated>
                   </div>
                 )}
 

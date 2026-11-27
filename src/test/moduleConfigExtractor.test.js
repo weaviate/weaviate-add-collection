@@ -11,6 +11,7 @@ import {
   getRerankerConfigFields,
   hasRerankerConfigOptions,
   getAllModuleConfigs,
+  getRequiredFields,
 } from '../utils/moduleConfigExtractor'
 import { getVectorizerModuleOptions } from '../constants/options'
 
@@ -181,5 +182,78 @@ describe('reranker-contextualai (TS client v3.11.0 PR #355)', () => {
     expect(byName.model?.type).toBe('string')
     expect(byName.instruction?.type).toBe('string')
     expect(byName.topN?.type).toBe('number')
+  })
+})
+
+// ─── v3.15.1 PR #475: generative-digitalocean ────────────────────────────────
+
+describe('generative-digitalocean (TS client v3.15.1 PR #475)', () => {
+  it('exposes the eight client fields with correct types', () => {
+    const byName = Object.fromEntries(getGenerativeConfigFields('generative-digitalocean').map(f => [f.name, f]))
+
+    expect(byName.model?.type).toBe('string')
+    expect(byName.baseURL?.type).toBe('string')
+    expect(byName.maxTokens?.type).toBe('number')
+    expect(byName.temperature?.type).toBe('number')
+    expect(byName.topP?.type).toBe('number')
+    expect(byName.frequencyPenalty?.type).toBe('number')
+    expect(byName.presencePenalty?.type).toBe('number')
+    expect(byName.stop?.type).toBe('string[]')
+  })
+
+  // The server defaults both model and baseURL, so neither may block the form.
+  it('marks no field as required', () => {
+    expect(getGenerativeConfigFields('generative-digitalocean').some(f => f.required)).toBe(false)
+  })
+})
+
+// ─── v3.15.0 PR #461: multi2vec-twelvelabs ───────────────────────────────────
+
+describe('multi2vec-twelvelabs (TS client v3.15.0 PR #461)', () => {
+  it('exposes the client fields with correct types', () => {
+    const byName = Object.fromEntries(getModuleConfigFields('multi2vec-twelvelabs').map(f => [f.name, f]))
+
+    expect(byName.baseURL?.type).toBe('string')
+    expect(byName.model?.type).toBe('string')
+    expect(byName.imageFields?.type).toBe('string[]')
+    expect(byName.textFields?.type).toBe('string[]')
+    expect(byName.weights?.type).toBe('object')
+  })
+
+  // The server only reads text and image fields; no video/audio like voyageai.
+  it('does not offer media fields the server ignores', () => {
+    const names = getModuleConfigFields('multi2vec-twelvelabs').map(f => f.name)
+    expect(names).not.toContain('videoFields')
+    expect(names).not.toContain('audioFields')
+  })
+})
+
+// ─── v3.15.0 PR #448: text2vec-aws dimensions ────────────────────────────────
+
+describe('text2vec-aws dimensions (TS client v3.15.0 PR #448)', () => {
+  it('exposes an optional numeric dimensions field', () => {
+    const dims = getModuleConfigFields('text2vec-aws').find(f => f.name === 'dimensions')
+    expect(dims?.type).toBe('number')
+    expect(dims?.required).toBeFalsy()
+  })
+
+  it('keeps region and service required', () => {
+    expect(getRequiredFields('text2vec-aws')).toEqual(['region', 'service'])
+  })
+})
+
+// ─── v3.15.0 PR #447: text2vec-google location ───────────────────────────────
+
+describe('text2vec-google location (TS client v3.15.0 PR #447)', () => {
+  it('exposes an optional string location field', () => {
+    const loc = getModuleConfigFields('text2vec-google').find(f => f.name === 'location')
+    expect(loc?.type).toBe('string')
+    expect(loc?.required).toBeFalsy()
+  })
+
+  // location is a Vertex AI setting; the Gemini (AI Studio) module has no region.
+  it('is not added to text2vec-google-gemini', () => {
+    const names = getModuleConfigFields('text2vec-google-gemini').map(f => f.name)
+    expect(names).not.toContain('location')
   })
 })

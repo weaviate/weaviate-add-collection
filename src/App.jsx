@@ -71,6 +71,19 @@ export default function App() {
     <div className="container">
       <div className="card-header">
         <h1>Weaviate — Add Collection</h1>
+        <small className="hint build-info">
+          <a href="https://www.npmjs.com/package/@weaviate/add-collection" target="_blank" rel="noopener noreferrer">
+            @weaviate/add-collection v{__APP_VERSION__}
+          </a>
+          {__APP_COMMIT__ && (
+            <>
+              {' · '}
+              <a href={`https://github.com/weaviate/weaviate-add-collection/commit/${__APP_COMMIT__}`} target="_blank" rel="noopener noreferrer">
+                {__APP_COMMIT__}
+              </a>
+            </>
+          )}
+        </small>
       </div>
       
       <div className="card-section">

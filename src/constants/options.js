@@ -67,6 +67,11 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.databricks.com/en/generative-ai/generative-ai.html',
     name: 'Generative Search - Databricks'
   },
+  'generative-digitalocean': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/digitalocean/generative',
+    name: 'Generative Search - DigitalOcean',
+    featureId: 'generativeDigitalocean'
+  },
   'generative-friendliai': {
     documentationHref: 'https://docs.friendli.ai/',
     name: 'Generative Search - FriendliAI'
@@ -134,6 +139,11 @@ export const allAvailableModules = {
   'multi2vec-jinaai': {
     documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/jinaai/embeddings-multimodal',
     name: 'JinaAI Multimodal Module'
+  },
+  'multi2vec-twelvelabs': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/twelvelabs/embeddings-multimodal',
+    name: 'TwelveLabs Multimodal Module',
+    featureId: 'vectorizerTwelvelabs'
   },
   'multi2vec-nvidia': {
     documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/nvidia/embeddings-multimodal',

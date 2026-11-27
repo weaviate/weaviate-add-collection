@@ -193,6 +193,24 @@ npm run test:ui
 
 See [TESTING.md](./TESTING.md) for detailed testing documentation.
 
+## Releasing
+
+Both commands take the version from `package.json`, so bump it first
+(`npm version patch|minor|major`, which also creates the git tag).
+
+```bash
+# Publish @weaviate/add-collection to npm (needs `npm login` with publish
+# rights on the @weaviate scope). prepublishOnly runs the test suite and
+# rebuilds lib/ first, so a failing test aborts the publish. The suite
+# includes live tests, so Weaviate must be running on localhost:8080.
+npm run release
+
+# Build the demo and deploy it to GitHub Pages
+# (https://weaviate.github.io/weaviate-add-collection/). The page header
+# shows the package version and commit it was built from.
+npm run deploy
+```
+
 ## How it Works
 - Open the app at http://localhost:5173 (default Vite port).
 - Fill the name and description fields. The generated JSON will update live below the form.
