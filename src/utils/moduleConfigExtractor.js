@@ -10,7 +10,8 @@
  * which catches one half of that drift; the other half (client gains a module
  * neither file knows about) still needs a manual audit on each client bump.
  *
- * Last transcribed against: weaviate-client 3.14.0.
+ * Last transcribed against: weaviate-client 3.15.3, plus HFresh multi-vector
+ * from unreleased client main (#500).
  *
  * ## How to Discover Properties for Each Vectorizer Module
  *
