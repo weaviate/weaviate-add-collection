@@ -140,6 +140,11 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/jinaai/embeddings-multimodal',
     name: 'JinaAI Multimodal Module'
   },
+  'multi2vec-twelvelabs': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/twelvelabs/embeddings-multimodal',
+    name: 'TwelveLabs Multimodal Module',
+    featureId: 'vectorizerTwelvelabs'
+  },
   'multi2vec-nvidia': {
     documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/nvidia/embeddings-multimodal',
     name: 'NVIDIA Multimodal Module'

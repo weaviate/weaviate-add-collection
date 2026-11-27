@@ -205,3 +205,24 @@ describe('generative-digitalocean (TS client v3.15.1 PR #475)', () => {
     expect(getGenerativeConfigFields('generative-digitalocean').some(f => f.required)).toBe(false)
   })
 })
+
+// ─── v3.15.0 PR #461: multi2vec-twelvelabs ───────────────────────────────────
+
+describe('multi2vec-twelvelabs (TS client v3.15.0 PR #461)', () => {
+  it('exposes the client fields with correct types', () => {
+    const byName = Object.fromEntries(getModuleConfigFields('multi2vec-twelvelabs').map(f => [f.name, f]))
+
+    expect(byName.baseURL?.type).toBe('string')
+    expect(byName.model?.type).toBe('string')
+    expect(byName.imageFields?.type).toBe('string[]')
+    expect(byName.textFields?.type).toBe('string[]')
+    expect(byName.weights?.type).toBe('object')
+  })
+
+  // The server only reads text and image fields; no video/audio like voyageai.
+  it('does not offer media fields the server ignores', () => {
+    const names = getModuleConfigFields('multi2vec-twelvelabs').map(f => f.name)
+    expect(names).not.toContain('videoFields')
+    expect(names).not.toContain('audioFields')
+  })
+})

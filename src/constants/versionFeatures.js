@@ -53,5 +53,6 @@ export const VERSION_FEATURES = {
   generativeContextualai:      '1.34.0',
   rerankerContextualai:        '1.34.0',
   vectorizerDigitalocean:      '1.38.0',
+  vectorizerTwelvelabs:        '1.39.0',  // backported to 1.38.9 / 1.37.15; gate follows the first native minor
   generativeDigitalocean:      '1.39.2',  // backported to 1.38.13 / 1.37.15; gate follows the first native minor
 }

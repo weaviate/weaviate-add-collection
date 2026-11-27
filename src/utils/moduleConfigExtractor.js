@@ -155,6 +155,15 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
     ]
   },
+  'multi2vec-twelvelabs': {
+    fields: [
+      { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go (server default: https://api.twelvelabs.io/v1.3).' },
+      { name: 'imageFields', type: 'string[]', description: 'The image fields used when vectorizing.' },
+      { name: 'model', type: 'string', description: 'The TwelveLabs model to use (server default: marengo3.0).' },
+      { name: 'textFields', type: 'string[]', description: 'The text fields used when vectorizing.' },
+      { name: 'weights', type: 'object', description: 'The weights of the fields used for vectorization.' }
+    ]
+  },
   'multi2vec-voyageai': {
     fields: [
       { name: 'baseURL', type: 'string', description: 'The base URL to use where API requests should go.' },

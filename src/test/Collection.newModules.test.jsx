@@ -429,3 +429,63 @@ describe('generative-digitalocean', () => {
     expect(readJson(container).moduleConfig?.['generative-digitalocean']).toEqual(config)
   })
 })
+
+// ─── multi2vec-twelvelabs (TS client v3.15.0 PR #461, Weaviate 1.39.0) ───────
+
+describe('multi2vec-twelvelabs', () => {
+  it('is offered and enabled when no version is set', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    const opt = optionFor(vectorizerSelect(container), 'multi2vec-twelvelabs')
+    expect(opt).toBeTruthy()
+    expect(opt.disabled).toBe(false)
+  })
+
+  it('is enabled for Weaviate >= 1.39.0', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.39.0" />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    expect(optionFor(vectorizerSelect(container), 'multi2vec-twelvelabs').disabled).toBe(false)
+  })
+
+  it('is disabled with help text below the minimum', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.38.99" />)
+    await waitForRender(container)
+    await openVectorConfig(user)
+
+    const opt = optionFor(vectorizerSelect(container), 'multi2vec-twelvelabs')
+    expect(opt.disabled).toBe(true)
+    expect(opt.textContent).toContain('1.39.0')
+  })
+
+  it('round-trips fields and weights through import', async () => {
+    const config = {
+      model: 'marengo3.0',
+      baseURL: 'https://api.twelvelabs.io/v1.3',
+      imageFields: ['poster'],
+      textFields: ['title'],
+      weights: { imageFields: [0.7], textFields: [0.3] },
+    }
+    const { container } = render(
+      <Collection initialJson={{
+        class: 'Clip',
+        properties: [
+          { name: 'title', dataType: ['text'] },
+          { name: 'poster', dataType: ['blob'] },
+        ],
+        vectorConfig: {
+          default: { vectorizer: { 'multi2vec-twelvelabs': config }, vectorIndexType: 'hnsw' },
+        },
+      }} />
+    )
+    await waitForRender(container)
+
+    expect(readJson(container).vectorConfig.default.vectorizer['multi2vec-twelvelabs']).toEqual(config)
+  })
+})
