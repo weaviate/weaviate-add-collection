@@ -67,6 +67,11 @@ export const allAvailableModules = {
     documentationHref: 'https://docs.databricks.com/en/generative-ai/generative-ai.html',
     name: 'Generative Search - Databricks'
   },
+  'generative-digitalocean': {
+    documentationHref: 'https://docs.weaviate.io/weaviate/model-providers/digitalocean/generative',
+    name: 'Generative Search - DigitalOcean',
+    featureId: 'generativeDigitalocean'
+  },
   'generative-friendliai': {
     documentationHref: 'https://docs.friendli.ai/',
     name: 'Generative Search - FriendliAI'

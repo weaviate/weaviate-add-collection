@@ -365,3 +365,67 @@ describe('reranker-cohere — baseURL field round-trip (PR #398)', () => {
     })
   })
 })
+
+// ─── generative-digitalocean (TS client v3.15.1 PR #475, Weaviate 1.39.2) ────
+
+describe('generative-digitalocean', () => {
+  async function openGenerativeAndEnable(user) {
+    await user.click(screen.getByRole('button', { name: /generative configuration/i }))
+    await waitFor(() => screen.getByLabelText(/enable generative search/i))
+    await user.click(screen.getByLabelText(/enable generative search/i))
+    await waitFor(() => screen.getByLabelText('Generative Module'))
+  }
+
+  function doOption() {
+    return optionFor(screen.getByLabelText('Generative Module'), 'generative-digitalocean')
+  }
+
+  it('is offered and enabled when no version is set', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openGenerativeAndEnable(user)
+
+    expect(doOption()).toBeTruthy()
+    expect(doOption().disabled).toBe(false)
+  })
+
+  it('is enabled for Weaviate >= 1.39.2', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.39.2" />)
+    await waitForRender(container)
+    await openGenerativeAndEnable(user)
+
+    expect(doOption().disabled).toBe(false)
+  })
+
+  // 1.39.0 and 1.39.1 do not ship the module; it first lands natively in 1.39.2.
+  it('is disabled with help text one patch below the minimum', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.39.1" />)
+    await waitForRender(container)
+    await openGenerativeAndEnable(user)
+
+    expect(doOption().disabled).toBe(true)
+    expect(doOption().textContent).toContain('1.39.2')
+  })
+
+  it('round-trips all fields through import', async () => {
+    const config = {
+      model: 'nemotron-3.5-super-vl',
+      baseURL: 'https://inference.do-ai.run',
+      maxTokens: 512,
+      temperature: 0.2,
+      topP: 0.9,
+      frequencyPenalty: 0.1,
+      presencePenalty: 0.3,
+      stop: ['###'],
+    }
+    const { container } = render(
+      <Collection initialJson={{ class: 'DoGen', moduleConfig: { 'generative-digitalocean': config } }} />
+    )
+    await waitForRender(container)
+
+    expect(readJson(container).moduleConfig?.['generative-digitalocean']).toEqual(config)
+  })
+})

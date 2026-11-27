@@ -427,6 +427,18 @@ const GENERATIVE_CONFIG_FIELDS = {
       { name: 'topP', type: 'number', description: 'Top-p sampling parameter.' }
     ]
   },
+  'generative-digitalocean': {
+    fields: [
+      { name: 'model', type: 'string', description: 'The DigitalOcean Serverless Inference model to use (server default: nemotron-3.5-super-vl).' },
+      { name: 'baseURL', type: 'string', description: 'The base URL for the DigitalOcean API (server default: https://inference.do-ai.run).' },
+      { name: 'maxTokens', type: 'number', description: 'Maximum number of tokens to generate.' },
+      { name: 'temperature', type: 'number', description: 'Temperature for response generation.' },
+      { name: 'topP', type: 'number', description: 'Top-p sampling parameter.' },
+      { name: 'frequencyPenalty', type: 'number', description: 'Penalty for token frequency.' },
+      { name: 'presencePenalty', type: 'number', description: 'Penalty for token presence.' },
+      { name: 'stop', type: 'string[]', description: 'Sequences where generation stops.' }
+    ]
+  },
   'generative-friendliai': {
     fields: [
       { name: 'model', type: 'string', description: 'The FriendliAI model to use.' },

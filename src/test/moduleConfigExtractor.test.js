@@ -183,3 +183,25 @@ describe('reranker-contextualai (TS client v3.11.0 PR #355)', () => {
     expect(byName.topN?.type).toBe('number')
   })
 })
+
+// ─── v3.15.1 PR #475: generative-digitalocean ────────────────────────────────
+
+describe('generative-digitalocean (TS client v3.15.1 PR #475)', () => {
+  it('exposes the eight client fields with correct types', () => {
+    const byName = Object.fromEntries(getGenerativeConfigFields('generative-digitalocean').map(f => [f.name, f]))
+
+    expect(byName.model?.type).toBe('string')
+    expect(byName.baseURL?.type).toBe('string')
+    expect(byName.maxTokens?.type).toBe('number')
+    expect(byName.temperature?.type).toBe('number')
+    expect(byName.topP?.type).toBe('number')
+    expect(byName.frequencyPenalty?.type).toBe('number')
+    expect(byName.presencePenalty?.type).toBe('number')
+    expect(byName.stop?.type).toBe('string[]')
+  })
+
+  // The server defaults both model and baseURL, so neither may block the form.
+  it('marks no field as required', () => {
+    expect(getGenerativeConfigFields('generative-digitalocean').some(f => f.required)).toBe(false)
+  })
+})
