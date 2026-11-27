@@ -11,6 +11,7 @@ import {
   getRerankerConfigFields,
   hasRerankerConfigOptions,
   getAllModuleConfigs,
+  getRequiredFields,
 } from '../utils/moduleConfigExtractor'
 import { getVectorizerModuleOptions } from '../constants/options'
 
@@ -224,5 +225,19 @@ describe('multi2vec-twelvelabs (TS client v3.15.0 PR #461)', () => {
     const names = getModuleConfigFields('multi2vec-twelvelabs').map(f => f.name)
     expect(names).not.toContain('videoFields')
     expect(names).not.toContain('audioFields')
+  })
+})
+
+// ─── v3.15.0 PR #448: text2vec-aws dimensions ────────────────────────────────
+
+describe('text2vec-aws dimensions (TS client v3.15.0 PR #448)', () => {
+  it('exposes an optional numeric dimensions field', () => {
+    const dims = getModuleConfigFields('text2vec-aws').find(f => f.name === 'dimensions')
+    expect(dims?.type).toBe('number')
+    expect(dims?.required).toBeFalsy()
+  })
+
+  it('keeps region and service required', () => {
+    expect(getRequiredFields('text2vec-aws')).toEqual(['region', 'service'])
   })
 })

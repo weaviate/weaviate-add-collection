@@ -489,3 +489,20 @@ describe('multi2vec-twelvelabs', () => {
     expect(readJson(container).vectorConfig.default.vectorizer['multi2vec-twelvelabs']).toEqual(config)
   })
 })
+
+// ─── text2vec-aws dimensions (TS client v3.15.0 PR #448) ─────────────────────
+
+describe('text2vec-aws — dimensions round-trip', () => {
+  it('preserves dimensions alongside the bedrock settings', async () => {
+    const config = { region: 'us-east-1', service: 'bedrock', model: 'amazon.titan-embed-text-v2:0', dimensions: 512 }
+    const { container } = render(
+      <Collection initialJson={{
+        class: 'AwsDims',
+        vectorConfig: { default: { vectorizer: { 'text2vec-aws': config }, vectorIndexType: 'hnsw' } },
+      }} />
+    )
+    await waitForRender(container)
+
+    expect(readJson(container).vectorConfig.default.vectorizer['text2vec-aws']).toEqual(config)
+  })
+})

@@ -189,6 +189,7 @@ const VECTORIZER_CONFIG_FIELDS = {
       { name: 'service', type: 'string', required: true, description: 'The AWS service to use (bedrock, sagemaker).' },
       { name: 'endpoint', type: 'string', description: 'The endpoint URL. REQUIRED for service sagemaker.' },
       { name: 'model', type: 'string', description: 'The model to use. REQUIRED for service bedrock.' },
+      { name: 'dimensions', type: 'number', description: 'The number of dimensions for the generated embeddings. Only for service bedrock with amazon.* models. Requires Weaviate 1.37.10+ / 1.38.2+.' },
     ]
   },
   'text2vec-azure-openai': {
