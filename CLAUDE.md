@@ -108,7 +108,13 @@ npm run test:ui
 
 ### Deploying demo to GitHub Pages
 ```bash
-npm run deploy
+npm run deploy   # predeploy builds dist/; header shows version + commit
+```
+
+### Publishing to npm (@weaviate/add-collection)
+```bash
+npm version patch   # or minor / major
+npm run release     # prepublishOnly runs tests + build:lib first
 ```
 
 ## Coding Patterns
