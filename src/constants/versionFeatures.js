@@ -28,6 +28,7 @@ export const VERSION_FEATURES = {
   // Multi-vector (HNSW only)
   multiVectorHnsw:             '1.29.0',  // ColBERT-style multi-vector (preview in 1.29)
   muveraEncoding:              '1.31.0',  // MUVERA encoding for multi-vector
+  multiVectorHfresh:           '1.40.0',  // MUVERA-only multi-vector on HFresh (vectorizers need 1.40.6 / 1.41.0)
 
   // Property indexing
   indexRangeFilters:           '1.24.0',

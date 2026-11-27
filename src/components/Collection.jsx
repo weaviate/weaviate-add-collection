@@ -1216,6 +1216,20 @@ export default function Collection({
           if (ic.searchProbe !== undefined && ic.searchProbe !== null) {
             indexConfig.searchProbe = ic.searchProbe
           }
+          // HFresh only stores multi-vectors MUVERA-encoded: the server rejects
+          // multivector.enabled without muvera.enabled, and muvera.enabled alone
+          // implies multivector. Either flag therefore emits both. aggregation
+          // is an HNSW setting the HFresh parser never reads, so it is dropped.
+          const mv = ic.multivector
+          if (mv && (mv.enabled === true || mv.muvera?.enabled === true)) {
+            const multivector = buildMultivectorConfig({
+              ...mv,
+              enabled: true,
+              muvera: { ...(mv.muvera || {}), enabled: true },
+            })
+            delete multivector.aggregation
+            indexConfig.multivector = multivector
+          }
         } else {
           // For non-dynamic index types (e.g., hnsw, flat), include known keys and skip defaults
           Object.keys(config.indexConfig).forEach(key => {

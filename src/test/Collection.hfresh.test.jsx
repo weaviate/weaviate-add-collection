@@ -85,3 +85,124 @@ describe('HFresh searchProbe', () => {
     await waitFor(() => expect(indexConfigOf(container) || {}).not.toHaveProperty('searchProbe'))
   })
 })
+
+// HFresh only stores multi-vectors MUVERA-encoded (weaviate #13883): the server
+// rejects multivector.enabled without muvera.enabled. Supported for
+// bring-your-own multi-vectors since 1.40.0; multi-vector vectorizers on HFresh
+// since 1.40.6 / 1.41.0.
+describe('HFresh multi-vector — export', () => {
+  const muvera = { enabled: true, ksim: 4, dprojections: 16, repetitions: 10 }
+
+  it('round-trips a full MUVERA config', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ multivector: { enabled: true, muvera } })} />
+    )
+    await waitForRender(container)
+
+    expect(indexConfigOf(container).multivector).toEqual({ enabled: true, muvera })
+  })
+
+  it('forces muvera on when only multivector.enabled is set', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ multivector: { enabled: true, muvera: { enabled: false, ksim: 3 } } })} />
+    )
+    await waitForRender(container)
+
+    expect(indexConfigOf(container).multivector).toEqual({ enabled: true, muvera: { enabled: true, ksim: 3 } })
+  })
+
+  it('implies multivector.enabled from muvera.enabled alone', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ multivector: { muvera: { enabled: true } } })} />
+    )
+    await waitForRender(container)
+
+    expect(indexConfigOf(container).multivector).toEqual({ enabled: true, muvera: { enabled: true } })
+  })
+
+  it('drops the HNSW-only aggregation setting', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ multivector: { enabled: true, aggregation: 'maxSim', muvera } })} />
+    )
+    await waitForRender(container)
+
+    expect(indexConfigOf(container).multivector).not.toHaveProperty('aggregation')
+  })
+
+  it('is omitted when both flags are off', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ replicas: 6, multivector: { enabled: false, muvera: { enabled: false } } })} />
+    )
+    await waitForRender(container)
+
+    expect(indexConfigOf(container)).not.toHaveProperty('multivector')
+  })
+
+  it('keeps the other HFresh parameters alongside it', async () => {
+    const { container } = render(
+      <Collection initialJson={hfreshWith({ replicas: 6, searchProbe: 128, multivector: { enabled: true, muvera } })} />
+    )
+    await waitForRender(container)
+
+    const ic = indexConfigOf(container)
+    expect(ic.replicas).toBe(6)
+    expect(ic.searchProbe).toBe(128)
+    expect(ic.multivector.muvera.enabled).toBe(true)
+  })
+})
+
+describe('HFresh multi-vector — UI', () => {
+  it('one toggle emits both flags, and removes them when turned off', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openHfreshIndexTab(user, container)
+
+    expect(screen.queryByLabelText('KSim')).toBeNull()
+
+    await user.click(container.querySelector('#hfresh-multivector-enabled-0'))
+    await waitFor(() => {
+      expect(indexConfigOf(container).multivector).toEqual({ enabled: true, muvera: { enabled: true } })
+    })
+
+    await user.type(container.querySelector('#hfresh-muvera-ksim-0'), '5')
+    await waitFor(() => expect(indexConfigOf(container).multivector.muvera.ksim).toBe(5))
+
+    await user.click(container.querySelector('#hfresh-multivector-enabled-0'))
+    await waitFor(() => expect(indexConfigOf(container) || {}).not.toHaveProperty('multivector'))
+  })
+
+  it('has no separate MUVERA on/off toggle', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection />)
+    await waitForRender(container)
+    await openHfreshIndexTab(user, container)
+    await user.click(container.querySelector('#hfresh-multivector-enabled-0'))
+
+    expect(screen.queryByLabelText(/enable muvera/i)).toBeNull()
+  })
+})
+
+describe('HFresh multi-vector — version gating', () => {
+  function tooltip() {
+    return screen.getByText('Multi-Vector (MUVERA)').closest('[data-version-tooltip]')
+  }
+
+  it('is greyed out one patch below 1.40.0', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.39.99" />)
+    await waitForRender(container)
+    await openHfreshIndexTab(user, container)
+
+    expect(tooltip()?.getAttribute('data-version-tooltip')).toContain('1.40.0')
+  })
+
+  it('is active at 1.40.0', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<Collection weaviateVersion="1.40.0" />)
+    await waitForRender(container)
+    await openHfreshIndexTab(user, container)
+
+    expect(tooltip()).toBeNull()
+  })
+})
