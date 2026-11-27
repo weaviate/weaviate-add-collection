@@ -866,11 +866,15 @@ export default function VectorConfigItem({
                       <label>Search Probe</label>
                       <input
                         type="number"
-                        value={value.indexConfig?.searchProbe ?? 64}
-                        onChange={(e) => update('indexConfig', { ...value.indexConfig, searchProbe: parseInt(e.target.value) || 64 })}
-                        placeholder="64"
+                        value={value.indexConfig?.searchProbe ?? ''}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value, 10)
+                          update('indexConfig', { ...value.indexConfig, searchProbe: Number.isNaN(n) ? undefined : n })
+                        }}
+                        placeholder="server default"
+                        min="1"
                       />
-                      <small className="hint">Number of posting lists to search during a query (default: 64)</small>
+                      <small className="hint">Number of posting lists to search during a query. Leave empty for the server default: 256 on Weaviate 1.37.10+, 1.38.2+ and 1.39+; 64 on earlier versions.</small>
                     </div>
                   </div>
                 )}
