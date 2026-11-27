@@ -241,3 +241,19 @@ describe('text2vec-aws dimensions (TS client v3.15.0 PR #448)', () => {
     expect(getRequiredFields('text2vec-aws')).toEqual(['region', 'service'])
   })
 })
+
+// ─── v3.15.0 PR #447: text2vec-google location ───────────────────────────────
+
+describe('text2vec-google location (TS client v3.15.0 PR #447)', () => {
+  it('exposes an optional string location field', () => {
+    const loc = getModuleConfigFields('text2vec-google').find(f => f.name === 'location')
+    expect(loc?.type).toBe('string')
+    expect(loc?.required).toBeFalsy()
+  })
+
+  // location is a Vertex AI setting; the Gemini (AI Studio) module has no region.
+  it('is not added to text2vec-google-gemini', () => {
+    const names = getModuleConfigFields('text2vec-google-gemini').map(f => f.name)
+    expect(names).not.toContain('location')
+  })
+})

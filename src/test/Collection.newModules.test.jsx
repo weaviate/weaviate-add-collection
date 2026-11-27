@@ -506,3 +506,25 @@ describe('text2vec-aws — dimensions round-trip', () => {
     expect(readJson(container).vectorConfig.default.vectorizer['text2vec-aws']).toEqual(config)
   })
 })
+
+// ─── text2vec-google location (TS client v3.15.0 PR #447) ────────────────────
+
+describe('text2vec-google — location round-trip', () => {
+  it('preserves location alongside the Vertex settings', async () => {
+    const config = {
+      projectId: 'my-project',
+      apiEndpoint: 'europe-west4-aiplatform.googleapis.com',
+      location: 'europe-west4',
+      model: 'text-embedding-005',
+    }
+    const { container } = render(
+      <Collection initialJson={{
+        class: 'GoogleLoc',
+        vectorConfig: { default: { vectorizer: { 'text2vec-google': config }, vectorIndexType: 'hnsw' } },
+      }} />
+    )
+    await waitForRender(container)
+
+    expect(readJson(container).vectorConfig.default.vectorizer['text2vec-google']).toEqual(config)
+  })
+})

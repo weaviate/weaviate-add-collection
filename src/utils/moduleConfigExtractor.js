@@ -281,6 +281,7 @@ const VECTORIZER_CONFIG_FIELDS = {
     fields: [
       { name: 'apiEndpoint', type: 'string', description: 'The API endpoint to use without a leading scheme.' },
       { name: 'dimensions', type: 'number', description: 'The dimensionality of the vector once embedded.' },
+      { name: 'location', type: 'string', description: 'The Vertex AI region where the model runs (server default: us-central1). Must match apiEndpoint. Requires Weaviate 1.37.10+ / 1.38.2+.' },
       { name: 'model', type: 'string', description: 'The model ID to use.' },
       { name: 'modelId', type: 'string', description: 'The model ID to use (deprecated - use model instead).' },
       { name: 'projectId', type: 'string', description: 'The project ID to use.' },
